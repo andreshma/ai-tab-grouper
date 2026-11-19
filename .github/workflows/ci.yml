@@ -1,0 +1,68 @@
+# CI: Lint → SAST → Test → Build → Policy gate → (Deploy manual a CWS)
+# DAST no aplica (sin superficie HTTP propia); el proxy corporativo tiene su propio pipeline.
+name: ci
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # TODO: pin a SHA completo
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      # Trojan Source: caracteres bidi / zero-width en código
+      - run: "! grep -rnP '[\\x{200B}-\\x{200F}\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}\\x{FEFF}]' src test scripts"
+
+  sast:
+    runs-on: ubuntu-latest
+    permissions: { security-events: write, contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: javascript-typescript, queries: security-extended }
+      - uses: github/codeql-action/analyze@v3
+
+  sca:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run audit:deps
+      - uses: actions/dependency-review-action@v4
+        if: github.event_name == 'pull_request'
+
+  test:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:coverage       # gates: lines 85 / branches 75 / functions 85
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage, path: coverage/ }
+
+  build:
+    needs: [test, sast, sca]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run package
+      - run: npm run cws:check           # gate de políticas Chrome Web Store
+      - run: npm run sbom
+      - uses: actions/upload-artifact@v4
+        with: { name: extension, path: dist/ }

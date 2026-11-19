@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Tab Grouper · Configuración</title>
+  <link rel="stylesheet" href="../ui/ui.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="../../icons/icon48.png" width="32" height="32" alt="">
+      <h1>AI Tab Grouper</h1>
+    </header>
+
+    <div class="banner" id="managedBanner" hidden>
+      <strong>Gestionado por tu organización.</strong>
+      <span class="muted">Las opciones bloqueadas las define TI y no se pueden cambiar aquí.</span>
+    </div>
+
+    <form id="form">
+      <div class="stack">
+        <section>
+          <h2>Claude (proveedor principal)</h2>
+          <div class="disclosure" id="disclosure">
+            <strong>Qué datos se envían y a quién</strong>
+            <p>Si activas Claude (API) o el puente con Claude Desktop, se envía a <strong id="dest">Anthropic (api.anthropic.com)</strong>
+              —o a tu sesión de Claude Desktop cuando tú se lo pides—:
+              el <strong>título</strong>, el <strong>dominio</strong> y, si lo permites abajo, la <strong>ruta de la URL</strong> redactada de tus pestañas.
+              Nunca se envían parámetros de URL, fragmentos, contenido de páginas, cookies ni contraseñas; se ocultan emails, IDs y números largos.</p>
+            <p>Uso exclusivo: decidir en qué grupo va cada pestaña. El desarrollador de la extensión no recibe, almacena ni vende ningún dato.
+              Gemini Nano y la heurística por dominio funcionan 100% en tu dispositivo y no requieren este consentimiento.</p>
+            <label class="check"><input type="checkbox" id="consent"> Entiendo y acepto enviar estos datos para agrupar mis pestañas.</label>
+          </div>
+          <label class="check"><input type="checkbox" name="enableClaude"> Usar Claude</label>
+
+          <p id="proxyInfo" class="ok" hidden>Conectado vía proxy corporativo: la credencial vive en el vault de tu organización, no en este equipo.</p>
+
+          <div id="byok" class="stack">
+            <div class="field">
+              <label for="apiKey">API key de Anthropic</label>
+              <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+              <small>Usa una key dedicada con límite de gasto. Nunca se sincroniza ni se envía a otro destino que api.anthropic.com.</small>
+            </div>
+            <label class="check"><input type="checkbox" id="rememberApiKey">
+              Recordar la key en este equipo (si no, se borra al cerrar Chrome)</label>
+          </div>
+
+          <div class="field">
+            <label for="claudeModel">Modelo</label>
+            <input id="claudeModel" name="claudeModel" type="text" spellcheck="false">
+            <small>Tier pequeño recomendado (latencia/costo). Ej.: claude-haiku-5-5.</small>
+          </div>
+          <div class="inline">
+            <button type="button" id="testClaude">Probar conexión</button>
+            <button type="button" id="clearKey" class="ghost">Eliminar key</button>
+            <span id="claudeResult" aria-live="polite"></span>
+          </div>
+        </section>
+
+        <section>
+          <h2>Claude Desktop (tu sesión de Claude)</h2>
+          <p class="muted">Permite que Claude Desktop, con tu sesión iniciada y sin API key, lea tus pestañas (los mismos datos redactados del aviso)
+            y las agrupe cuando se lo pidas. Requiere instalar el puente local una vez.</p>
+          <label class="check"><input type="checkbox" name="enableDesktopBridge" id="enableDesktopBridge"> Activar puente con Claude Desktop</label>
+          <div class="inline"><span>Estado: <strong id="bridgeState">…</strong></span></div>
+          <div class="field">
+            <label for="extId">ID de esta extensión (para el instalador)</label>
+            <div class="inline"><input id="extId" type="text" readonly><button type="button" id="copyId">Copiar</button></div>
+            <small>En la carpeta <code>bridge</code>: <code>node install.mjs --extension-id &lt;ID&gt; --configure-claude</code> y reinicia Claude Desktop.</small>
+          </div>
+        </section>
+
+        <section>
+          <h2>Gemini Nano (on-device)</h2>
+          <label class="check"><input type="checkbox" name="enableNano"> Usar Gemini Nano si está disponible</label>
+          <label class="check"><input type="checkbox" name="preferOnDevice"> Preferir on-device antes que Claude (privacidad primero)</label>
+          <div class="inline">
+            <span>Estado: <strong id="nanoState">…</strong></span>
+            <button type="button" id="downloadNano" hidden>Descargar modelo</button>
+          </div>
+          <small class="muted">Requiere Chrome con Prompt API y hardware compatible. Si no está disponible, se omite.</small>
+        </section>
+
+        <section>
+          <h2>Comportamiento</h2>
+          <label class="check"><input type="checkbox" name="autoGroup"> Agrupar automáticamente al cargar pestañas</label>
+          <label class="check"><input type="checkbox" name="enableHeuristic"> Fallback por dominio si la IA falla</label>
+          <label class="check"><input type="checkbox" name="catchAllGroup"> Al agrupar manualmente o con Claude Desktop, poner las pestañas sueltas en "Varios"</label>
+          <div class="grid2">
+            <div class="field">
+              <label for="language">Idioma de los nombres</label>
+              <select id="language" name="language"><option value="es">Español</option><option value="en">English</option></select>
+            </div>
+            <div class="field">
+              <label for="minGroupSize">Mín. pestañas por grupo nuevo</label>
+              <input id="minGroupSize" name="minGroupSize" type="number" min="1" max="10">
+            </div>
+            <div class="field">
+              <label for="minIntervalMs">Intervalo mín. auto (s)</label>
+              <input id="minIntervalMs" name="minIntervalMs" type="number" min="2" max="600" data-scale="1000">
+            </div>
+            <div class="field">
+              <label for="maxTabsPerRequest">Máx. pestañas por petición</label>
+              <input id="maxTabsPerRequest" name="maxTabsPerRequest" type="number" min="5" max="150">
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Privacidad</h2>
+          <label class="check"><input type="checkbox" name="sendPath"> Enviar ruta de URL redactada (sin query ni fragment) para mejor precisión</label>
+          <div class="field">
+            <label for="excludedHosts">Dominios que nunca salen del dispositivo (uno por línea)</label>
+            <textarea id="excludedHosts" name="excludedHosts" placeholder="mibanco.com&#10;intranet.empresa.com"></textarea>
+            <small id="policyHosts">Se agrupan localmente por dominio. Incluye subdominios.</small>
+          </div>
+        </section>
+      </div>
+
+      <div class="savebar">
+        <button type="submit" class="primary">Guardar</button>
+        <span id="saved" aria-live="polite"></span>
+      </div>
+    </form>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

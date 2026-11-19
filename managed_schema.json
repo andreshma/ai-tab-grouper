@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "allowedProviders": {
+      "title": "Proveedores IA permitidos",
+      "description": "Subconjunto de: claude, nano, heuristic. Los no listados se desactivan y bloquean.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "excludedHosts": {
+      "title": "Dominios excluidos de IA remota",
+      "description": "Se suman a los del usuario. Incluye subdominios. Nunca se envían a un modelo remoto.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "forbidPathSending": {
+      "title": "Prohibir envío de rutas de URL",
+      "description": "Si true, solo se envían título y dominio.",
+      "type": "boolean"
+    },
+    "disableAutoGroup": {
+      "title": "Desactivar agrupación automática",
+      "description": "Si true, solo agrupación manual.",
+      "type": "boolean"
+    },
+    "allowUserApiKey": {
+      "title": "Permitir API key personal (BYOK)",
+      "description": "Si false, el usuario no puede usar su propia key de Anthropic.",
+      "type": "boolean"
+    },
+    "apiKeyStorage": {
+      "title": "Almacenamiento de la API key personal",
+      "description": "session = solo en memoria (se borra al cerrar Chrome); local = persistente.",
+      "type": "string",
+      "enum": ["session", "local"]
+    },
+    "allowedModels": {
+      "title": "Modelos permitidos",
+      "description": "Allowlist de model ids; el primero es el valor por defecto.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "allowDesktopBridge": {
+      "title": "Permitir puente con Claude Desktop",
+      "description": "Si false, la extensión no expone pestañas a Claude Desktop vía MCP.",
+      "type": "boolean"
+    },
+    "proxyEndpoint": {
+      "title": "Endpoint del proxy corporativo",
+      "description": "URL HTTPS compatible con Messages API. La credencial vive en el vault del proxy; la extensión no envía API key.",
+      "type": "string"
+    }
+  }
+}

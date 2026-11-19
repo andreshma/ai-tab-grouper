@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "AI Tab Grouper",
+  "version": "1.4.0",
+  "description": "Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual.",
+  "minimum_chrome_version": "120",
+  "permissions": ["tabs", "tabGroups", "storage"],
+  "optional_permissions": ["nativeMessaging"],
+  "host_permissions": ["https://api.anthropic.com/*"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "storage": {
+    "managed_schema": "managed_schema.json"
+  },
+  "action": {
+    "default_title": "AI Tab Grouper",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_page": "src/options/options.html",
+  "commands": {
+    "group-now": {
+      "suggested_key": { "default": "Alt+Shift+G" },
+      "description": "Agrupar pestañas sin grupo de la ventana actual"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'self'; style-src 'self'; connect-src https:"
+  }
+}

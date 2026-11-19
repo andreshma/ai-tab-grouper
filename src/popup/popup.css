@@ -1,0 +1,9 @@
+body { width: 300px; }
+main { padding: 14px; display: grid; gap: 10px; }
+header { display: flex; align-items: center; gap: 8px; }
+.status { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; min-height: 40px; }
+.status p { margin: 0; }
+.status p + p { margin-top: 3px; }
+.actions { display: grid; gap: 6px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
