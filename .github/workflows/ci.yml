@@ -19,7 +19,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       # Trojan Source: caracteres bidi / zero-width en código
-      - run: "! grep -rnP '[\\x{200B}-\\x{200F}\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}\\x{FEFF}]' src test scripts"
+      - run: "! grep -rnP '[\\x{200B}-\\x{200F}\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}\\x{FEFF}]' src test scripts bridge"
 
   sast:
     runs-on: ubuntu-latest
