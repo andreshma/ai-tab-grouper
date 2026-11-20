@@ -1,79 +1,79 @@
-# Puente Claude Desktop ⇄ Chrome (MCP)
+# Claude Desktop ⇄ Chrome bridge (MCP)
 
-Permite que **Claude Desktop, con tu sesión de Claude** (suscripción, sin API key), lea y agrupe tus pestañas de Chrome mediante la extensión AI Tab Grouper.
+Lets **Claude Desktop, with your Claude session** (subscription, no API key), read and group your Chrome tabs through the AI Tab Grouper extension.
 
 ```
-Claude Desktop ──stdio/MCP──► mcp-server.js ──IPC + token──► host.js ◄──native messaging── Extensión (SW)
- (tu sesión)                    (0 deps)       (pipe/socket 0600)  (lanzado por Chrome,           │
-                                                                    solo para esta extensión)     ▼
+Claude Desktop ──stdio/MCP──► mcp-server.js ──IPC + token──► host.js ◄──native messaging── Extension (SW)
+ (your session)                 (0 deps)       (pipe/socket 0600)  (launched by Chrome,           │
+                                                                    only for this extension)      ▼
                                                                                          chrome.tabGroups
 ```
 
-Claude Desktop nunca entrega credenciales a este código: el razonamiento ocurre en tu sesión de Claude y solo llegan aquí llamadas a herramientas.
+Claude Desktop never hands credentials to this code: the reasoning happens in your Claude session and only tool calls arrive here.
 
-## Requisitos
+## Requirements
 
-- Node.js ≥ 20 (se usa la ruta absoluta del binario con el que ejecutes el instalador).
-- Chrome (o Edge/Chromium) con la extensión instalada.
+- Node.js ≥ 20 (the absolute path of the binary you run the installer with is used).
+- Chrome (or Edge/Chromium) with the extension installed.
 - Claude Desktop.
 
-## Instalación (una vez)
+## Installation (once)
 
-1. Extensión → **Configuración** → sección *Claude Desktop* → copia el **ID de la extensión**.
-2. En esta carpeta:
+1. Extension → **Configuración** (Settings) → *Claude Desktop* section → copy the **extension ID**.
+2. In this folder:
    ```bash
    node install.mjs --extension-id <ID> --configure-claude
-   # Edge: añade --browser edge
+   # Edge: add --browser edge
    ```
-   - Registra el host nativo (Windows: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.aitabgrouper.bridge`; macOS/Linux: JSON en `NativeMessagingHosts/`).
-   - Añade `ai-tab-grouper` a `mcpServers` en `claude_desktop_config.json` (con backup; conserva tus otros servidores).
-3. Reinicia Claude Desktop.
-4. Extensión → Configuración → acepta el **aviso de datos** → activa **Puente con Claude Desktop** (Chrome pedirá el permiso "comunicarse con aplicaciones nativas") → **Guardar**. Estado: *Conectado*.
+   - Registers the native host (Windows: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.aitabgrouper.bridge`; macOS/Linux: JSON in `NativeMessagingHosts/`).
+   - Adds `ai-tab-grouper` to `mcpServers` in `claude_desktop_config.json` (with a backup; your other servers are kept).
+3. Restart Claude Desktop.
+4. Extension → Configuración → accept the **data notice** ("aviso de datos") → enable **"Activar puente con Claude Desktop"** (Enable bridge with Claude Desktop; Chrome will ask for the "communicate with native applications" permission) → **"Guardar"** (Save). Status: *"Conectado"* (Connected).
 
-Verifica con `node doctor.mjs` (todo PASS). No muevas la carpeta tras instalar (o vuelve a ejecutar el instalador). Desinstalar: `node install.mjs --uninstall --configure-claude`.
+Verify with `node doctor.mjs` (all PASS). Do not move the folder after installing (or run the installer again). Uninstall: `node install.mjs --uninstall --configure-claude`.
 
-## Uso
+## Usage
 
-En Claude Desktop:
+In Claude Desktop:
 
-- "Organiza mis pestañas de Chrome por tema."
-- "Agrupa solo las pestañas sueltas de la ventana actual; usa nombres en inglés."
-- "Lista mis pestañas de todas las ventanas y propón grupos antes de aplicarlos." (revisión humana antes de actuar)
+- "Organize my Chrome tabs by topic."
+- "Group only the ungrouped tabs in the current window; use English names."
+- "List my tabs from all windows and propose groups before applying them." (human review before acting)
 
-Herramientas MCP:
+MCP tools:
 
-| Tool | Efecto | Anotaciones |
+| Tool | Effect | Annotations |
 |---|---|---|
-| `list_tabs` | Título, dominio, ruta redactada y grupo actual por ventana | readOnly |
-| `apply_tab_groups` | Crea/reutiliza grupos con los `tabIds` de `list_tabs` | idempotent, no destructiva |
-| `ungroup_tabs` | Desagrupa una ventana | **destructiva** → Claude pide confirmación |
+| `list_tabs` | Title, domain, redacted path and current group, per window | readOnly |
+| `apply_tab_groups` | Creates/reuses groups with the `tabIds` from `list_tabs` | idempotent, non-destructive |
+| `ungroup_tabs` | Ungroups a window | **destructive** → Claude asks for confirmation |
 
-Para ejecutarlo de forma recurrente, crea una tarea programada en Claude Desktop/Cowork con el prompt "Organiza mis pestañas de Chrome por tema" (requiere que Chrome esté abierto).
+To run it on a recurring basis, create a scheduled task in Claude Desktop/Cowork with the prompt "Organize my Chrome tabs by topic" (requires Chrome to be open).
 
-## Seguridad
+## Security
 
-| Control | Detalle |
+| Control | Detail |
 |---|---|
-| Quién lanza el host | Solo Chrome, y solo para el ID en `allowed_origins` |
-| Quién habla con el host | Clientes locales con el token de sesión (256 bits, comparación en tiempo constante); el token se borra cuando Chrome cierra el puerto |
-| Superficie | Allowlist de 4 métodos en host y extensión; validación de argumentos en ambos lados |
-| Datos | Mismos que el proveedor Claude API: redactados, sin query/fragment, dominios excluidos nunca expuestos; requiere consentimiento vigente |
-| Prompt injection indirecta | Salida de `list_tabs` marcada como no confiable y delimitada; la extensión solo acepta ids elegibles; acción máxima = agrupar/desagrupar |
-| Política TI | `allowDesktopBridge: false` lo apaga; `excludedHosts` y `forbidPathSending` aplican también aquí |
-| Supply chain | 0 dependencias runtime |
+| Who launches the host | Only Chrome, and only for the ID in `allowed_origins` |
+| Who talks to the host | Local clients holding the session token (256 bits, constant-time comparison); the token is deleted when Chrome closes the port |
+| Surface | Allowlist of 4 methods in the host and in the extension; argument validation on both sides |
+| Data | Same as the Claude API provider: redacted, no query/fragment, excluded domains never exposed; requires valid consent |
+| Indirect prompt injection | `list_tabs` output marked as untrusted and delimited; the extension only accepts eligible ids; maximum action = group/ungroup |
+| IT policy | `allowDesktopBridge: false` turns it off; `excludedHosts` and `forbidPathSending` apply here too |
+| Supply chain | 0 runtime dependencies |
 
 ## Troubleshooting
 
-| Síntoma | Acción |
+| Symptom | Action |
 |---|---|
-| Extensión: "Host no instalado" | Ejecuta el instalador con el ID correcto; reinicia Chrome |
-| Claude: "Chrome no está abierto o el puente…" | Abre Chrome; verifica que el puente esté activado y *Conectado* |
-| Claude: "aviso de datos" | Acepta el aviso en Configuración de la extensión |
-| Claude no ve las herramientas | Revisa `claude_desktop_config.json` y reinicia Claude Desktop |
-| Logs del host | stderr de Chrome (`chrome --enable-logging=stderr`) · logs MCP de Claude Desktop |
+| Extension: "Host no instalado" (Host not installed) | Run the installer with the correct ID; restart Chrome |
+| Claude: "Chrome no está abierto o el puente…" (Chrome is not open or the bridge...) | Open Chrome; check that the bridge is enabled and *"Conectado"* |
+| Claude: "aviso de datos" (data notice) | Accept the notice in the extension's Configuración page |
+| Claude does not see the tools | Check `claude_desktop_config.json` and restart Claude Desktop |
+| Host logs | Chrome's stderr (`chrome --enable-logging=stderr`) · Claude Desktop MCP logs |
 
 ## Tests
 
 ```bash
-node --test "test/**/*.test.js"   # 20 tests: protocolo, contrato, MCP, instalador, E2E con procesos reales
+node --test "test/**/*.test.js"   # protocol, contract, MCP, installer, E2E with real processes
 ```
