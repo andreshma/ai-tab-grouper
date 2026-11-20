@@ -6,20 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-11-20
+
+First public release. Fixes the three medium findings of the [adversarial review](docs/ADVERSARIAL_REVIEW.md).
+
 ### Added
 - `npm run deploy:local`: copies the runtime to the folder Chrome loads (stable ID, no `node_modules`).
 - `package-lock.json` under version control, and `.gitignore`.
 - Open-source project files: Apache-2.0 `LICENSE` and `NOTICE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `SUPPORT.md`, `RELEASING.md`, issue and pull request templates, `CODEOWNERS`, Dependabot, `.editorconfig`, `.gitattributes` and a pre-commit configuration.
-- `docs/USAGE.md` (user manual), `docs/ARCHITECTURE.md`, `docs/TESTING.md` and an index of the decision records.
+- `docs/USAGE.md` (user manual), `docs/ARCHITECTURE.md`, `docs/DIAGRAMS.md`, `docs/TESTING.md`, `docs/ADVERSARIAL_REVIEW.md` and an index of the decision records.
+- `Makefile` wrapping the npm scripts.
 - CI runs the test suite on Windows as well as Linux.
 
 ### Changed
 - All documentation is now in English; the extension interface stays in Spanish.
+- `PRIVACY.md` corrected to match the code: existing group names are sent, preferences use Chrome Sync, numbers are masked from 5 digits, and removing the bridge needs its uninstaller.
 - Vulnerabilities are reported through GitHub private vulnerability reporting instead of an email address.
 - Decision records renamed to `docs/adr/000N-*.md`; the threat model moved to `docs/THREAT_MODEL.md`.
 - CodeQL runs in its own workflow, also for the workflow files, weekly and on every pull request; CI actions updated and pinned by commit SHA.
 
 ### Security
+- A tab whose title is just its address (pages without a `<title>`) is now sent without a title: the title carried the query string and fragment that the path handling drops (AR-01).
+- The title of a tab group that holds a tab on an excluded host is no longer sent to the Claude API, the proxy or the Claude Desktop bridge; the local fallback names such groups after the host (AR-02).
+- Redaction scans a bounded amount of text and the email pattern has bounded quantifiers: a page could stall the service worker with a very long title or path (AR-03).
 - `web-ext` ^10.8.0 (dev): removes 3 critical and 5 high vulnerabilities from the build chain (`npm audit` 0 high/critical).
 
 ## [1.4.1] - 2026-11-20
