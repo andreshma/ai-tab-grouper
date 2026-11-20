@@ -16,7 +16,7 @@ import { isAutoCandidate, isFreshCandidate } from '../src/lib/ledger.js';
 import { buildUserMessage } from '../src/lib/prompt.js';
 import { classifyWithNano, nanoAvailability } from '../src/lib/providers/nano.js';
 import { buildClaudeRequest, buildHeaders, classifyWithClaude, extractToolInput } from '../src/lib/providers/claude.js';
-import { isHostExcluded, redactText, toTabDescriptor } from '../src/lib/redact.js';
+import { groupsWithExcludedTabs, isUrlLikeTitle, isHostExcluded, redactText, toTabDescriptor } from '../src/lib/redact.js';
 import { CircuitBreaker, HttpError, parseRetryAfter, withRetry } from '../src/lib/resilience.js';
 import { colorForName, normalizeResult, sanitizeGroupName, TAB_GROUP_COLORS } from '../src/lib/validate.js';
 
@@ -33,6 +33,47 @@ describe('redact', () => {
     assert.ok(!out.includes('9012'));
     assert.ok(!out.includes('eyJhbGci'));
     assert.ok(!out.includes('123e4567'));
+  });
+
+  it('drops a title that is just the URL, so query and fragment never ride along (regression)', () => {
+    const url = 'https://intranet.example/search?q=despido+juan+perez&sid=ab12cd#token=xyz';
+    for (const title of [url, 'intranet.example/search?q=despido+juan+perez&sid=ab12cd#token=xyz', 'INTRANET.example', 'intranet.example:8443/x?y=1']) {
+      const d = toTabDescriptor({ id: 1, title, url });
+      assert.equal(d.title, '', title);
+      assert.ok(!JSON.stringify(d).includes('despido') && !JSON.stringify(d).includes('token='), title);
+    }
+    const www = toTabDescriptor({ id: 2, title: 'www.shop.example/cart?coupon=SECRET', url: 'https://www.shop.example/cart?coupon=SECRET' });
+    assert.equal(www.title, '');
+    assert.equal(www.host, 'shop.example');
+  });
+
+  it('keeps real titles, including ones that mention the host', () => {
+    assert.equal(isUrlLikeTitle('intranet.example - Home', 'intranet.example'), false);
+    assert.equal(isUrlLikeTitle('What is X? - Wiki', 'wiki.example'), false);
+    assert.equal(isUrlLikeTitle('intranet.examples.org/page', 'intranet.example'), false, 'longer host is another site');
+    assert.equal(isUrlLikeTitle('anything', ''), false, 'unparsable URL: nothing to compare with');
+    assert.equal(toTabDescriptor({ id: 3, title: 'Inbox (3)', url: 'https://mail.example.com/u/0' }).title, 'Inbox (3)');
+  });
+
+  it('stays fast on page-controlled input of any length (regression: quadratic email pattern)', () => {
+    const hostile = 'a'.repeat(200_000);
+    const started = performance.now();
+    const d = toTabDescriptor({ id: 4, title: hostile, url: `https://evil.example/${hostile}/x` });
+    assert.ok(performance.now() - started < 500, 'must not scale with input length');
+    assert.ok(d.title.length <= 120 && /** @type {string} */ (d.path).length <= 60);
+    assert.equal(redactText(`${'b'.repeat(70)} ana@corp.com`).includes('ana@corp.com'), false, 'emails are still masked');
+  });
+
+  it('finds the groups that hold excluded-host tabs', () => {
+    const tabs = [
+      { groupId: 5, url: 'https://acme-merger.example/deal' },
+      { groupId: 5, url: 'https://docs.example.org/a' },
+      { groupId: 6, url: 'https://news.example.org/' },
+      { groupId: -1, url: 'https://acme-merger.example/loose' },
+      { groupId: 7, pendingUrl: 'https://sub.acme-merger.example/x' },
+    ];
+    assert.deepEqual([...groupsWithExcludedTabs(tabs, ['acme-merger.example'])].sort(), [5, 7]);
+    assert.equal(groupsWithExcludedTabs(tabs, []).size, 0);
   });
 
   it('drops query and fragment, keeps redacted path', () => {
@@ -217,6 +258,16 @@ describe('classifier chain', () => {
     assert.equal(r.provider, 'claude');
     assert.deepEqual(sent.tabs.map((t) => t.id), [1, 2]);
     assert.deepEqual(r.groups.map((g) => g.name).sort(), ['Bank', 'Dev']);
+  });
+
+  it('never sends the title of a group that holds excluded tabs (regression: host label leaked via existingGroups)', async () => {
+    let sent;
+    const deps = baseDeps({ classifyWithClaude: async (inp) => { sent = inp; return { groups: [] }; } });
+    await classifyTabs(
+      { ...input, existingGroups: ['Bank', 'Dev'], localOnlyGroups: ['Bank'] },
+      { ...settings, excludedHosts: ['bank.com'] }, deps,
+    );
+    assert.deepEqual(sent.existingGroups, ['Dev']);
   });
 
   it('falls back to heuristic when Claude fails and no key/nano', async () => {

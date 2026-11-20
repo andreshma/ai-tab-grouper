@@ -12,7 +12,7 @@ import { isAutoCandidate, isFreshCandidate, isGroupableUrl, NO_GROUP } from './l
 import { classifyWithClaude } from './lib/providers/claude.js';
 import { classifyWithNano, nanoAvailability } from './lib/providers/nano.js';
 import { createBridge } from './lib/bridge.js';
-import { hostOf, isHostExcluded, toTabDescriptor } from './lib/redact.js';
+import { groupsWithExcludedTabs, hostOf, isHostExcluded, toTabDescriptor } from './lib/redact.js';
 import { CircuitBreaker } from './lib/resilience.js';
 import { normalizeResult } from './lib/validate.js';
 
@@ -101,6 +101,7 @@ async function runGrouping(windowId, mode) {
   running.add(windowId);
   try {
     const { tabs, groups } = await getWindowSnapshot(windowId);
+    const privateGroups = groupsWithExcludedTabs(/** @type {any} */ (tabs), settings.excludedHosts);
     const ledger = (await sessionStore.get(LEDGER_KEY)) ?? {};
     const candidates = tabs.filter((t) => {
       if (mode === 'auto') return isAutoCandidate(/** @type {any} */ (t), ledger[t.id]);
@@ -120,6 +121,8 @@ async function runGrouping(windowId, mode) {
     const input = {
       tabs: candidates.map((t) => toTabDescriptor(/** @type {any} */ (t), { sendPath: settings.sendPath })),
       existingGroups: groups.map((g) => g.title ?? '').filter(Boolean),
+      // Titles of groups holding excluded-host tabs never reach a remote provider.
+      localOnlyGroups: groups.filter((g) => privateGroups.has(g.id)).map((g) => g.title ?? '').filter(Boolean),
     };
     const result = await classifyTabs(input, settings, deps);
     const grouped = await applyGroups(windowId, result.groups, groups);
@@ -186,7 +189,10 @@ const bridgeHandlers = {
     for (const w of windows) {
       if (w.id === undefined) continue;
       const { tabs, groups } = await getWindowSnapshot(w.id);
-      const titleOf = new Map(groups.map((g) => [g.id, g.title ?? '']));
+      // A group that holds excluded-host tabs is usually named after that host: keep its title local.
+      const privateGroups = groupsWithExcludedTabs(/** @type {any} */ (tabs), s.excludedHosts);
+      const visibleGroups = groups.filter((g) => !privateGroups.has(g.id));
+      const titleOf = new Map(visibleGroups.map((g) => [g.id, g.title ?? '']));
       const list = [];
       for (const t of tabs) {
         if (budget <= 0) break;
@@ -200,7 +206,7 @@ const bridgeHandlers = {
       out.push({
         windowId: w.id,
         focused: Boolean(w.focused),
-        existingGroups: groups.map((g) => ({ title: g.title ?? '', color: g.color })),
+        existingGroups: visibleGroups.map((g) => ({ title: g.title ?? '', color: g.color })),
         tabs: list,
       });
     }

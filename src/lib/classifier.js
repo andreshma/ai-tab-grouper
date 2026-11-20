@@ -27,7 +27,8 @@ import { normalizeResult } from './validate.js';
 const SKIP = Symbol('skip');
 
 /**
- * @param {{tabs: import('./redact.js').TabDescriptor[], existingGroups: string[]}} input
+ * @param {{tabs: import('./redact.js').TabDescriptor[], existingGroups: string[], localOnlyGroups?: string[]}} input
+ *   `localOnlyGroups`: existing titles that must not be sent to a remote provider.
  * @param {import('./config.js').Settings & {proxyEndpoint?: string}} settings  Effective (policy-applied) settings.
  * @param {ClassifierDeps} deps
  * @returns {Promise<ClassificationResult>}
@@ -77,7 +78,7 @@ async function runProvider(provider, input, settings, deps) {
       const local = input.tabs.filter((t) => isHostExcluded(t.host, settings.excludedHosts));
       const raw = remote.length
         ? /** @type {any} */ (await deps.classifyWithClaude(
-          { tabs: remote, existingGroups: input.existingGroups },
+          { tabs: remote, existingGroups: input.existingGroups.filter((name) => !(input.localOnlyGroups ?? []).includes(name)) },
           { apiKey, endpoint, model: settings.claudeModel, language: settings.language },
         ))
         : { groups: [] };

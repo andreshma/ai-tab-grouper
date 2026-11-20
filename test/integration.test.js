@@ -228,6 +228,15 @@ describe('Claude Desktop bridge (native messaging)', () => {
     assert.ok(reply.result.notGroupable >= 2, 'pinned + chrome:// counted so Claude can explain them');
   });
 
+  it('list_tabs: hides the title of a group that holds excluded tabs (regression)', async () => {
+    const gid = await fake.chrome.tabs.group({ tabIds: [22, 23], createProperties: { windowId: WIN } });
+    await fake.chrome.tabGroups.update(gid, { title: 'Corp-secret' });
+    const reply = await fake.hostRequest(port, { id: 11, method: 'list_tabs', params: { scope: 'current' } });
+    assert.equal(reply.error, undefined, reply.error?.message);
+    assert.ok(!JSON.stringify(reply.result).includes('Corp-secret'), 'title derived from an excluded host stays local');
+    await fake.chrome.tabs.ungroup([22, 23]);
+  });
+
   it('apply_tab_groups: groups valid tabs, ignores excluded/unknown ids', async () => {
     fake.addTab({ id: 40, url: 'https://kubernetes.io/docs', title: 'K8s docs' });
     fake.addTab({ id: 41, url: 'https://helm.sh/docs', title: 'Helm docs' });
