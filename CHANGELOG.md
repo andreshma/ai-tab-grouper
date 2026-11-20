@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- Bridge host: the Unix socket is created with a restrictive umask, so it is never wider than 0600, not even between bind and chmod. The test that checks it now waits for the host to be ready (it failed intermittently in CI).
+
 ## [1.4.2] - 2026-11-20
 
 First public release. Fixes the three medium findings of the [adversarial review](docs/ADVERSARIAL_REVIEW.md).

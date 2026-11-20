@@ -202,7 +202,10 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
     host = spawn(process.execPath, [join(ROOT, 'src', 'host.js'), `chrome-extension://${EXT_ID}/`], { env, stdio: ['pipe', 'pipe', 'pipe'] });
     const dec = new NativeMessageDecoder(fakeExtension);
     host.stdout.on('data', (c) => dec.push(c));
-    for (let i = 0; i < 100 && !existsSync(tokenPath(dir)); i++) await sleep(20);
+    // The token exists before the socket does: wait for the host's "ready" line instead.
+    let hostLog = '';
+    host.stderr.on('data', (c) => { hostLog += c; });
+    for (let i = 0; i < 250 && !hostLog.includes('ready'); i++) await sleep(20);
 
     mcp = spawn(process.execPath, [join(ROOT, 'src', 'mcp-server.js')], { env, stdio: ['pipe', 'pipe', 'pipe'] });
     const lines = new LineDecoder((m) => mcpResponses.push(m));
