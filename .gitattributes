@@ -1,0 +1,11 @@
+# Normalize line endings: LF in the repo, auto-converted in the working tree.
+* text=auto eol=lf
+
+# Batch files stay CRLF for Windows tooling.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets (no diff/merge, no eol conversion).
+*.png binary
+*.jpg binary
+*.zip binary

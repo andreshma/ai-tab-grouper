@@ -1,7 +1,9 @@
 {
   "name": "ai-tab-grouper-bridge",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "private": true,
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/andreshma/ai-tab-grouper.git", "directory": "bridge" },
   "description": "Local bridge: Claude Desktop (MCP) <-> Chrome extension (native messaging). Zero runtime dependencies.",
   "type": "module",
   "engines": { "node": ">=20" },

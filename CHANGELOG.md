@@ -1,95 +1,114 @@
 # Changelog
 
-Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versionado: [SemVer](https://semver.org/lang/es/).
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-11-20
+
+First public release. Fixes the three medium findings of the [adversarial review](docs/ADVERSARIAL_REVIEW.md).
+
 ### Added
-- `CLAUDE.md` con contexto, invariantes, comandos, lecciones y DoD para trabajar el repo con Claude Code.
-- `npm run deploy:local`: copia el runtime a la carpeta que carga Chrome (ID estable, sin `node_modules`).
-- `package-lock.json` versionado y `.gitignore`.
+- `npm run deploy:local`: copies the runtime to the folder Chrome loads (stable ID, no `node_modules`).
+- `package-lock.json` under version control, and `.gitignore`.
+- Open-source project files: Apache-2.0 `LICENSE` and `NOTICE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `SUPPORT.md`, `RELEASING.md`, issue and pull request templates, `CODEOWNERS`, Dependabot, `.editorconfig`, `.gitattributes` and a pre-commit configuration.
+- `docs/USAGE.md` (user manual), `docs/ARCHITECTURE.md`, `docs/DIAGRAMS.md`, `docs/TESTING.md`, `docs/ADVERSARIAL_REVIEW.md` and an index of the decision records.
+- `Makefile` wrapping the npm scripts.
+- CI runs the test suite on Windows as well as Linux.
+
+### Changed
+- All documentation is now in English; the extension interface stays in Spanish.
+- `PRIVACY.md` corrected to match the code: existing group names are sent, preferences use Chrome Sync, numbers are masked from 5 digits, and removing the bridge needs its uninstaller.
+- Vulnerabilities are reported through GitHub private vulnerability reporting instead of an email address.
+- Decision records renamed to `docs/adr/000N-*.md`; the threat model moved to `docs/THREAT_MODEL.md`.
+- CodeQL runs in its own workflow, also for the workflow files, weekly and on every pull request; CI actions updated and pinned by commit SHA.
 
 ### Security
-- `web-ext` ^10.8.0 (dev): elimina 3 vulnerabilidades críticas y 5 altas de la cadena de build (`npm audit` 0 high/critical).
+- A tab whose title is just its address (pages without a `<title>`) is now sent without a title: the title carried the query string and fragment that the path handling drops (AR-01).
+- The title of a tab group that holds a tab on an excluded host is no longer sent to the Claude API, the proxy or the Claude Desktop bridge; the local fallback names such groups after the host (AR-02).
+- Redaction scans a bounded amount of text and the email pattern has bounded quantifiers: a page could stall the service worker with a very long title or path (AR-03).
+- `web-ext` ^10.8.0 (dev): removes 3 critical and 5 high vulnerabilities from the build chain (`npm audit` 0 high/critical).
 
 ## [1.4.1] - 2026-11-20
 
 ### Fixed
-- Instalador del puente: con `AI_TAB_GROUPER_HOME` definido (instalación aislada, usada por los tests) ya no escribe ni borra la clave `HKCU\…\NativeMessagingHosts` en Windows. Ejecutar `npm test` en Windows reemplazaba el registro real por un manifest temporal con un ID de prueba y dejaba el popup en "Claude Desktop: reconectando…". `doctor` aplica la misma regla.
-- `npm run cws:check` ya no depende del binario `unzip` (ausente en Windows): lee el directorio central del zip con Node, sin dependencias.
-- Tests del puente portables a Windows (separador de rutas y permisos POSIX).
+- Bridge installer: when `AI_TAB_GROUPER_HOME` is set (isolated install, used by the tests) it no longer writes or deletes the `HKCU\...\NativeMessagingHosts` key on Windows. Running `npm test` on Windows replaced the real registry entry with a temporary manifest carrying a test ID and left the popup at "Claude Desktop: reconectando…" ("Claude Desktop: reconnecting..."). `doctor` applies the same rule.
+- `npm run cws:check` no longer depends on the `unzip` binary (missing on Windows): it reads the zip central directory with Node, with no dependencies.
+- Bridge tests are portable to Windows (path separator and POSIX permissions).
 
 ## [1.4.0] - 2026-11-19
 
 ### Added
-- Grupo **"Varios"** (gris, plegado) garantiza cobertura en "Agrupar ahora", "Reorganizar todo" y Claude Desktop: las pestañas que ningún tema reclama ya no quedan sueltas. No aplica en modo automático (permite que las sueltas formen grupo después).
-- Parámetro `catchAll` en `apply_tab_groups` (default true) para peticiones parciales; respuesta incluye `catchAllGroup`.
-- Opción en Configuración para desactivarlo; `doctor` informa pestañas sin grupo y no agrupables en todas las ventanas.
+- The **"Varios"** ("Miscellaneous") group (grey, collapsed) guarantees coverage in "Agrupar ahora" ("Group now"), "Reorganizar todo" ("Reorganize all") and Claude Desktop: tabs that no topic claims are no longer left ungrouped. It does not apply in automatic mode (so that ungrouped tabs can form a group later).
+- `catchAll` parameter in `apply_tab_groups` (default true) for partial requests; the response includes `catchAllGroup`.
+- Option in "Configuración" ("Settings") to turn it off; `doctor` reports ungrouped and non-groupable tabs across all windows.
 
 ### Changed
-- La cobertura ya no depende de que el modelo siga instrucciones (garantía determinista en la extensión).
+- Coverage no longer depends on the model following instructions (deterministic guarantee in the extension).
 
 ## [1.3.1] - 2026-11-19
 
 ### Fixed
-- El popup mostraba "sin motor" (falso negativo) cuando el service worker seguía con la versión anterior tras actualizar archivos; ahora pide recargar la extensión.
+- The popup showed "sin motor" ("no engine", a false negative) when the service worker was still running the previous version after the files were updated; it now asks you to reload the extension.
 
 ## [1.3.0] - 2026-11-19
 
 ### Changed
-- Claude Desktop agrupa **todas** las pestañas por defecto: instrucciones MCP piden cobertura total, `scope: all` y grupo "Varios" para lo que no encaja.
+- Claude Desktop groups **all** tabs by default: the MCP instructions ask for full coverage, `scope: all` and a "Varios" ("Miscellaneous") group for whatever does not fit.
 
 ### Added
-- `apply_tab_groups` devuelve `remainingUngroupedTabIds` para que Claude haga una segunda pasada.
-- `list_tabs` devuelve `notGroupable` (fijadas y páginas no web) para que Claude pueda explicarlas.
+- `apply_tab_groups` returns `remainingUngroupedTabIds` so that Claude can make a second pass.
+- `list_tabs` returns `notGroupable` (pinned tabs and non-web pages) so that Claude can explain them.
 
 ## [1.2.2] - 2026-11-19
 
 ### Fixed
-- El popup prometía "se usará heurística por dominio" aunque no hubiera ningún proveedor local activo; ahora informa la causa real ("No se agrupó: ningún proveedor disponible…") y cómo resolverla. Lógica extraída a `src/popup/status.js` con tests.
+- The popup promised "se usará heurística por dominio" ("the domain heuristic will be used") even when no local provider was enabled; it now reports the real cause ("No se agrupó: ningún proveedor disponible…", "Not grouped: no provider available...") and how to fix it. Logic extracted to `src/popup/status.js`, with tests.
 
 ## [1.2.1] - 2026-11-19
 
 ### Fixed
-- Configuración mostraba "Estado: —" y "Probar conexión" no reseteaba el circuit breaker: la validación de remitente rechazaba la página de opciones por abrirse como pestaña (`sender.tab`). Ahora se valida solo el id y el origen de la extensión.
+- "Configuración" ("Settings") showed "Estado: —" ("Status: —") and "Probar conexión" ("Test connection") did not reset the circuit breaker: sender validation rejected the options page because it opens as a tab (`sender.tab`). Now only the extension id and origin are validated.
 
 ## [1.2.0] - 2026-11-19
 
 ### Added
-- Puente con **Claude Desktop** (tu sesión de Claude, sin API key): servidor MCP local + host de native messaging + instalador para Windows/macOS/Linux (`bridge/`, 0 dependencias runtime).
-- Tools MCP `list_tabs`, `apply_tab_groups`, `ungroup_tabs` con validación en ambos extremos y salida marcada como no confiable.
-- Política `allowDesktopBridge`; estado del puente en popup y configuración.
-- `bridge/doctor.mjs`: diagnóstico end-to-end (instalación, Claude Desktop, MCP, Chrome ⇄ extensión) sin exponer contenido de pestañas.
-- Plan de prueba E2E para Windows (`docs/E2E_TEST_PLAN_WINDOWS.md`).
-- ADR-003; amenazas T11–T15 en el threat model; 72 tests (incluye E2E con procesos reales).
+- Bridge to **Claude Desktop** (your Claude session, no API key): local MCP server + native messaging host + installer for Windows/macOS/Linux (`bridge/`, 0 runtime dependencies).
+- MCP tools `list_tabs`, `apply_tab_groups`, `ungroup_tabs`, validated at both ends and with output marked as untrusted.
+- `allowDesktopBridge` policy; bridge status in the popup and in settings.
+- `bridge/doctor.mjs`: end-to-end diagnostics (installation, Claude Desktop, MCP, Chrome ⇄ extension) without exposing tab content.
+- E2E test plan for Windows (`docs/E2E_TEST_PLAN_WINDOWS.md`).
+- [ADR-0003](docs/adr/0003-claude-desktop-mcp-bridge.md); threats T11–T15 in the [threat model](docs/THREAT_MODEL.md); 72 tests (including E2E with real processes).
 
 ### Changed
-- `CONSENT_VERSION` → 2 (nuevo destino de datos): se vuelve a pedir el consentimiento.
-- Permiso opcional `nativeMessaging` (solo al activar el puente).
-- Launcher del host en Windows como `.bat` (forma documentada por Chrome).
+- `CONSENT_VERSION` → 2 (new data destination): consent is requested again.
+- Optional `nativeMessaging` permission (requested only when the bridge is enabled).
+- Host launcher on Windows as a `.bat` (the form documented by Chrome).
 
 ## [1.1.0] - 2026-11-19
 
 ### Added
-- Política enterprise vía `chrome.storage.managed` (`managed_schema.json`): proveedores permitidos, exclusiones, modelos, BYOK, almacenamiento de key, auto-grouping.
-- Modo proxy corporativo: sin API key en el dispositivo; SSO con `credentials: include`.
-- Aviso de datos con consentimiento explícito y versionado antes de cualquier envío remoto (Chrome Web Store Disclosure Requirements).
-- Tests de integración del service worker con fake de APIs Chrome (43 tests, cobertura 96% líneas).
-- Gate `scripts/cws-check.mjs` (27 checks), ESLint con reglas de seguridad, CI (CodeQL, audit, SBOM).
-- PRIVACY.md, SECURITY.md, threat model STRIDE/OWASP LLM, ADR-002, guía de despliegue enterprise y ficha de tienda.
+- Enterprise policy through `chrome.storage.managed` (`managed_schema.json`): allowed providers, exclusions, models, BYOK, key storage, auto-grouping.
+- Corporate proxy mode: no API key on the device; SSO with `credentials: include`.
+- Data notice with explicit, versioned consent before any remote transmission (Chrome Web Store Disclosure Requirements).
+- Service worker integration tests with a fake of the Chrome APIs (43 tests, 96% line coverage).
+- `scripts/cws-check.mjs` gate (27 checks), ESLint with security rules, CI (CodeQL, audit, SBOM).
+- PRIVACY.md, SECURITY.md, STRIDE/OWASP LLM threat model, [ADR-0002](docs/adr/0002-enterprise-hardening.md), enterprise deployment guide and store listing.
 
 ### Changed
-- La API key se guarda por defecto solo en memoria de sesión; persistir es opt-in.
-- CSP estricta: `default-src 'self'`, `object-src 'none'`, `base-uri`/`frame-ancestors 'none'`, sin estilos inline.
-- Llamadas a Anthropic con `credentials: 'omit'` y `redirect: 'error'`.
+- The API key is kept only in session memory by default; persisting it is opt-in.
+- Strict CSP: `default-src 'self'`, `object-src 'none'`, `base-uri`/`frame-ancestors 'none'`, no inline styles.
+- Calls to Anthropic use `credentials: 'omit'` and `redirect: 'error'`.
 
 ### Security
-- Mensajería solo desde páginas propias de la extensión (id + URL + sin tab).
-- Eliminación de caracteres bidi/zero-width en nombres de grupo; escaneo Trojan Source en CI.
+- Messaging only from the extension's own pages (id + URL + no tab).
+- Bidi/zero-width characters are stripped from group names; Trojan Source scan in CI.
 
 ## [1.0.0] - 2026-11-19
 
 ### Added
-- Agrupación automática (debounce + throttle) y manual (popup, `Alt+Shift+G`).
-- Proveedores: Claude API, Gemini Nano, heurística por dominio; retry/backoff y circuit breaker.
-- Redacción de PII, `excludedHosts`, validación de salida, ledger por pestaña.
+- Automatic grouping (debounce + throttle) and manual grouping (popup, `Alt+Shift+G`).
+- Providers: Claude API, Gemini Nano, domain heuristic; retry/backoff and circuit breaker.
+- PII redaction, `excludedHosts`, output validation, per-tab ledger.
