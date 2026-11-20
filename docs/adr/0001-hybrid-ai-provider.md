@@ -1,38 +1,40 @@
-# ADR-001: Cadena híbrida de proveedores IA (Claude → Gemini Nano → heurística)
+# ADR-0001: Hybrid AI provider chain (Claude → Gemini Nano → heuristic)
 
-**Status:** Accepted — 2026-11-19
+## Status
+
+Accepted - 2026-11-19
 
 ## Context
 
-La extensión debe clasificar pestañas por tema con buena calidad, funcionar sin configuración y no filtrar datos sensibles del historial de navegación. Requisitos: auto + manual, latencia < 3 s p95 percibida, costo marginal ~0, degradación elegante.
+The extension must classify tabs by topic with good quality, work without configuration and not leak sensitive data from the browsing history. Requirements: auto + manual, perceived latency < 3 s p95, marginal cost ~0, graceful degradation.
 
 ## Decision
 
-1. **Claude API (BYOK) como primario**, modelo tier pequeño (`claude-haiku-5-5`), salida estructurada vía `tool_choice` forzado. Llamada directa desde la extensión con `anthropic-dangerous-direct-browser-access`.
-2. **Gemini Nano (Prompt API)** como segundo proveedor, con `responseConstraint` JSON Schema. Toggle `preferOnDevice` invierte el orden.
-3. **Heurística por dominio** como terminal: nunca falla, offline.
-4. Resiliencia: retry con backoff + jitter (respeta `retry-after`), circuit breaker por proveedor (3 fallos / 5 min) persistido en `storage.session`.
-5. Minimización previa a cualquier proveedor + validación posterior de toda salida.
+1. **Claude API (BYOK) as primary**, small-tier model (`claude-haiku-5-5`), structured output through forced `tool_choice`. Direct call from the extension with `anthropic-dangerous-direct-browser-access`.
+2. **Gemini Nano (Prompt API)** as the second provider, with a JSON Schema `responseConstraint`. The `preferOnDevice` toggle reverses the order.
+3. **Domain heuristic** as the terminal provider: it never fails and works offline.
+4. Resilience: retry with backoff + jitter (honors `retry-after`), per-provider circuit breaker (3 failures / 5 min) persisted in `storage.session`.
+5. Minimization before any provider + validation of all output afterwards.
 
 ## Consequences
 
-- ✅ Calidad alta por defecto; funciona sin key; sin backend propio (cero infra, cero costo operativo).
-- ✅ Fallos de Claude (429/529/red) no bloquean al usuario.
-- ⚠️ **API key en `chrome.storage.local`**: no hay vault en el navegador. Mitigación: key dedicada con spend limit, nunca sincronizada, CSP estricta. Desviación consciente del estándar "secrets en vault".
-- ⚠️ Títulos/hosts salen a Anthropic al usar Claude (redactados). `excludedHosts` y `preferOnDevice` cubren usuarios sensibles.
-- ⚠️ Nano puede no estar expuesto en service workers según versión → se omite.
-- Prompt caching no aplica: el prefijo (system + tool) está bajo el mínimo cacheable.
+- ✅ High quality by default; works without a key; no backend of our own (zero infrastructure, zero operating cost).
+- ✅ Claude failures (429/529/network) do not block the user.
+- ⚠️ **API key in `chrome.storage.local`**: there is no vault in the browser. Mitigation: dedicated key with a spend limit, never synced, strict CSP. Deliberate deviation from the "secrets in a vault" standard.
+- ⚠️ Titles/hosts leave for Anthropic when Claude is used (redacted). `excludedHosts` and `preferOnDevice` cover sensitive users.
+- ⚠️ Nano may not be exposed in service workers depending on the version → it is skipped.
+- Prompt caching does not apply: the prefix (system + tool) is below the minimum cacheable size.
 
-## Alternatives considered
+## Alternatives
 
-| Alternativa | Descartada por |
+| Alternative | Rejected because |
 |---|---|
-| Backend proxy propio (key en vault, rate limit central) | Infra + costo + operación para una extensión personal; recomendado si se distribuye a la organización (ver next steps) |
-| Solo Nano | Disponibilidad por hardware/versión; calidad menor en clasificación semántica |
-| Solo heurística | No agrupa por tarea (p.ej. "Viajes" = skyscanner + booking) |
-| Embeddings + clustering local | Requiere modelo de embeddings en el navegador; mayor complejidad; nombres de grupo menos naturales |
-| Nano vía offscreen document | Añade complejidad; se adopta solo si el SW no expone `LanguageModel` en la versión objetivo |
+| Own backend proxy (key in a vault, central rate limit) | Infrastructure + cost + operations for a personal extension; recommended if it is distributed to the organization (see next steps) |
+| Nano only | Availability depends on hardware/version; lower quality in semantic classification |
+| Heuristic only | Does not group by task (e.g. "Travel" = skyscanner + booking) |
+| Embeddings + local clustering | Requires an embeddings model in the browser; more complexity; less natural group names |
+| Nano through an offscreen document | Adds complexity; adopted only if the SW does not expose `LanguageModel` in the target version |
 
 ## Next steps
 
-- Distribución corporativa: proxy (Cloud Run/Lambda) con key en Secret Manager, OAuth del usuario, rate limiting y DLP central; la extensión cambia solo el endpoint del provider.
+- Corporate distribution: proxy (Cloud Run/Lambda) with the key in Secret Manager, user OAuth, rate limiting and central DLP; the extension only changes the provider endpoint.

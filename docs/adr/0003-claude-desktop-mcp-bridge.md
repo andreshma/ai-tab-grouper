@@ -1,36 +1,38 @@
-# ADR-003: Puente MCP con Claude Desktop vía native messaging
+# ADR-0003: MCP bridge to Claude Desktop through native messaging
 
-**Status:** Accepted — 2026-11-19
+## Status
+
+Accepted - 2026-11-19
 
 ## Context
 
-El usuario quiere usar su Claude con sesión iniciada (suscripción) en lugar de una API key. Anthropic prohíbe que terceros ofrezcan login de Claude.ai, intermedien credenciales de suscripción o almacenen tokens de sesión; Chrome Web Store prohíbe eludir restricciones de servicios de IA. La vía permitida es que la app nativa de Anthropic (Claude Desktop) use herramientas locales vía MCP.
+The user wants to use their signed-in Claude (subscription) instead of an API key. Anthropic forbids third parties from offering Claude.ai login, brokering subscription credentials or storing session tokens; the Chrome Web Store forbids circumventing restrictions of AI services. The permitted route is for Anthropic's native app (Claude Desktop) to use local tools through MCP.
 
 ## Decision
 
-1. **MCP server local** (`bridge/src/mcp-server.js`, stdio) registrado en Claude Desktop. Expone `list_tabs`, `apply_tab_groups`, `ungroup_tabs`.
-2. **Native messaging** entre la extensión y un host local (`host.js`) lanzado por Chrome, restringido por `allowed_origins`.
-3. **IPC local** MCP ⇄ host por named pipe / Unix socket (0600) con **token de sesión** efímero.
-4. Permiso `nativeMessaging` **opcional**, solicitado solo al activar el puente.
-5. MCP **implementado a mano** (JSON-RPC mínimo), cero dependencias runtime.
-6. Mismo modelo de datos y consentimiento que el proveedor API (bump `CONSENT_VERSION` → 2).
+1. **Local MCP server** (`bridge/src/mcp-server.js`, stdio) registered in Claude Desktop. It exposes `list_tabs`, `apply_tab_groups`, `ungroup_tabs`.
+2. **Native messaging** between the extension and a local host (`host.js`) launched by Chrome, restricted by `allowed_origins`.
+3. **Local IPC** MCP ⇄ host over a named pipe / Unix socket (0600) with an ephemeral **session token**.
+4. **Optional** `nativeMessaging` permission, requested only when the bridge is enabled.
+5. MCP **implemented by hand** (minimal JSON-RPC), zero runtime dependencies.
+6. Same data model and consent as the API provider (bump `CONSENT_VERSION` → 2).
 
 ## Consequences
 
-- ✅ Usa la suscripción del usuario dentro de los términos (Claude Desktop es el cliente; nunca tocamos credenciales).
-- ✅ Sin costo de API; sin key en el dispositivo.
-- ✅ La instalación de la extensión desde la tienda no exige permisos nuevos (opcional).
-- ⚠️ Bajo demanda (o tarea programada), no reactivo a cada pestaña como el modo auto.
-- ⚠️ Requiere Node.js y un paso de instalación local por usuario.
-- ⚠️ MCP hecho a mano: hay que seguir la evolución del protocolo (mitigado: negociación de versión + tests de handshake).
-- ⚠️ Nueva amenaza: prompt injection indirecta hacia un agente con otras herramientas (ver threat model T11).
+- ✅ Uses the user's subscription within the terms (Claude Desktop is the client; we never touch credentials).
+- ✅ No API cost; no key on the device.
+- ✅ Installing the extension from the store requires no new permissions (optional).
+- ⚠️ On demand (or scheduled task), not reactive to every tab like auto mode.
+- ⚠️ Requires Node.js and a local installation step per user.
+- ⚠️ Hand-written MCP: the evolution of the protocol has to be tracked (mitigated: version negotiation + handshake tests).
+- ⚠️ New threat: indirect prompt injection towards an agent that has other tools (see [threat model](../THREAT_MODEL.md) T11).
 
-## Alternatives considered
+## Alternatives
 
-| Alternativa | Descartada por |
+| Alternative | Rejected because |
 |---|---|
-| WebSocket en localhost en vez de native messaging | Cualquier página web puede abrir `ws://localhost`; exige auth y defensa DNS-rebinding; native messaging restringe por ID de extensión |
-| SDK oficial `@modelcontextprotocol/sdk` | Añade árbol de dependencias runtime; para 3 tools el protocolo mínimo es pequeño. Reconsiderar si se necesitan recursos, prompts o transporte HTTP |
-| Usar cookies/sesión de claude.ai desde la extensión | Prohibido por Anthropic y por CWS |
-| Claude in Chrome | Solo opera sobre las pestañas de su propio grupo; sin API para terceros |
-| Empaquetar como Desktop Extension (.mcpb) | Instalación 1-click; siguiente paso tras validar el flujo |
+| WebSocket on localhost instead of native messaging | Any web page can open `ws://localhost`; it requires auth and a DNS-rebinding defense; native messaging restricts by extension ID |
+| Official `@modelcontextprotocol/sdk` SDK | Adds a runtime dependency tree; for 3 tools the minimal protocol is small. Reconsider if resources, prompts or HTTP transport are needed |
+| Use claude.ai cookies/session from the extension | Forbidden by Anthropic and by CWS |
+| Claude in Chrome | Only operates on the tabs of its own group; no API for third parties |
+| Package as a Desktop Extension (.mcpb) | 1-click installation; next step once the flow is validated |

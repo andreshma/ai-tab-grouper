@@ -1,13 +1,13 @@
-# Despliegue enterprise
+# Enterprise deployment
 
-## 1. Forzar instalación
+## 1. Force installation
 
-Política Chrome `ExtensionInstallForcelist`: `<EXTENSION_ID>;https://clients2.google.com/service/update2/crx`
+Chrome policy `ExtensionInstallForcelist`: `<EXTENSION_ID>;https://clients2.google.com/service/update2/crx`
 
-## 2. Configurar la política de la extensión
+## 2. Configure the extension policy
 
 ### Google Admin console
-Dispositivos → Chrome → Apps y extensiones → AI Tab Grouper → *Política para extensiones* (JSON):
+Devices → Chrome → Apps & extensions → AI Tab Grouper → *Policy for extensions* (JSON):
 
 ```json
 {
@@ -20,7 +20,7 @@ Dispositivos → Chrome → Apps y extensiones → AI Tab Grouper → *Política
 }
 ```
 
-### Windows (GPO / Intune OMA-URI, registro)
+### Windows (GPO / Intune OMA-URI, registry)
 
 ```
 HKLM\Software\Policies\Google\Chrome\3rdparty\extensions\<EXTENSION_ID>\policy
@@ -31,23 +31,23 @@ HKLM\Software\Policies\Google\Chrome\3rdparty\extensions\<EXTENSION_ID>\policy
   excludedHosts     (subkey)  1=intranet.corp.example
 ```
 
-### macOS (perfil de configuración)
-Dominio `com.google.Chrome.extensions.<EXTENSION_ID>` con las mismas claves.
+### macOS (configuration profile)
+Domain `com.google.Chrome.extensions.<EXTENSION_ID>` with the same keys.
 
-Verificación: `chrome://policy` → sección de la extensión.
+Verification: `chrome://policy` → the extension's section.
 
-## 3. Perfiles recomendados
+## 3. Recommended profiles
 
-| Perfil | Política |
+| Profile | Policy |
 |---|---|
-| **Máxima privacidad** | `allowedProviders: ["nano","heuristic"]` — nada sale del equipo |
-| **Corporativo estándar** | `proxyEndpoint` + `allowUserApiKey:false` + `forbidPathSending:true` + `excludedHosts` |
-| **Equipo técnico BYOK** | `apiKeyStorage:"session"` + `allowedModels` |
+| **Maximum privacy** | `allowedProviders: ["nano","heuristic"]` - nothing leaves the device |
+| **Standard corporate** | `proxyEndpoint` + `allowUserApiKey:false` + `forbidPathSending:true` + `excludedHosts` |
+| **BYOK technical team** | `apiKeyStorage:"session"` + `allowedModels` |
 
-## 4. Contrato del proxy
+## 4. Proxy contract
 
-- `POST {proxyEndpoint}` con body idéntico a Messages API (`model`, `system`, `tools`, `tool_choice`, `messages`). Responde el JSON de Anthropic sin modificar.
-- Auth: SSO por cookie (IAP / Entra App Proxy / Cloudflare Access). La extensión envía `credentials: include` y **ninguna** key.
+- `POST {proxyEndpoint}` with a body identical to the Messages API (`model`, `system`, `tools`, `tool_choice`, `messages`). It returns the Anthropic JSON unmodified.
+- Auth: cookie-based SSO (IAP / Entra App Proxy / Cloudflare Access). The extension sends `credentials: include` and **no** key.
 - CORS: `Access-Control-Allow-Origin: chrome-extension://<EXTENSION_ID>`, `Access-Control-Allow-Credentials: true`, `Allow-Headers: content-type, anthropic-version`.
-- Debe: inyectar key desde Secret Manager/Key Vault · allowlist de modelos · rate limit por usuario · DLP sobre `messages[].content` · log de auditoría sin contenido (usuario, tokens, modelo, latencia) · ZDR/retención según acuerdo con Anthropic.
-- Sin redirects (la extensión usa `redirect: 'error'`).
+- It must: inject the key from Secret Manager/Key Vault · enforce a model allowlist · rate limit per user · apply DLP to `messages[].content` · keep an audit log without content (user, tokens, model, latency) · apply ZDR/retention as agreed with Anthropic.
+- No redirects (the extension uses `redirect: 'error'`).

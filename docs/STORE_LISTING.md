@@ -1,49 +1,60 @@
-# Chrome Web Store — ficha y formulario de privacidad
+# Chrome Web Store - listing and privacy form
 
-## Ficha
+## Listing
+
+### English (en) locale
+
+- **Name:** AI Tab Grouper
+- **Summary (≤132):** Group your tabs by topic with AI (Claude or local Gemini Nano) or by domain, automatically or manually.
+- **Category:** Productivity / Tools
+- **Description (first paragraph = prominent disclosure):**
+  > Automatically organize your tabs into groups by topic. **To work, it reads the title and address of your tabs.** You can use local AI (Gemini Nano, nothing leaves your device), grouping by domain (no AI) or Anthropic's Claude with your own API key - in that case, and only after your explicit consent, the title and domain of your tabs are sent to Anthropic. No analytics, no servers of our own, no selling of data.
+
+### Spanish (es) locale
 
 - **Nombre:** AI Tab Grouper
 - **Resumen (≤132):** Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual.
 - **Categoría:** Productividad / Herramientas
 - **Descripción (primer párrafo = divulgación prominente):**
   > Organiza automáticamente tus pestañas en grupos por tema. **Para funcionar, lee el título y la dirección de tus pestañas.** Puedes usar IA local (Gemini Nano, nada sale de tu equipo), agrupación por dominio (sin IA) o Claude de Anthropic con tu propia API key — en ese caso, y solo tras tu consentimiento explícito, se envían el título y el dominio de las pestañas a Anthropic. Sin analítica, sin servidores propios, sin venta de datos.
-- **Assets:** ícono 128×128 (incluido), ≥1 captura 1280×800 o 640×400 (popup + configuración), tile promocional 440×280 (opcional).
-- **Política de privacidad (URL pública obligatoria):** publicar `PRIVACY.md` (p.ej. GitHub Pages) y pegar la URL.
 
-## Pestaña "Privacy practices"
+### Common to both locales
 
-**Single purpose:** Agrupar las pestañas abiertas del usuario en grupos de Chrome según su tema.
+- **Assets:** 128×128 icon (included), ≥1 screenshot at 1280×800 or 640×400 (popup + settings), 440×280 promotional tile (optional).
+- **Privacy policy (public URL required):** publish `PRIVACY.md` (e.g. GitHub Pages) and paste the URL.
 
-**Justificación de permisos** (salida de `npm run cws:check`):
+## "Privacy practices" tab
 
-| Permiso | Justificación |
+**Single purpose:** Group the user's open tabs into Chrome tab groups according to their topic.
+
+**Permission justification** (output of `npm run cws:check`):
+
+| Permission | Justification |
 |---|---|
-| `tabs` | Leer título y URL de las pestañas para decidir su grupo (función única de la extensión). |
-| `tabGroups` | Crear, nombrar y colorear grupos de pestañas. |
-| `storage` | Guardar preferencias del usuario, política gestionada por TI y estado de sesión. |
-| `https://api.anthropic.com/*` | Enviar título/dominio redactados al modelo Claude del usuario (BYOK) para clasificar pestañas, solo con consentimiento explícito. |
+| `tabs` | Read the title and URL of tabs to decide their group (the extension's single purpose). |
+| `tabGroups` | Create, name and color tab groups. |
+| `storage` | Store user preferences, IT-managed policy and session state. |
+| `https://api.anthropic.com/*` | Send the redacted title/domain to the user's Claude model (BYOK) to classify tabs, only with explicit consent. |
+| `nativeMessaging` (optional) | Requested only if the user enables the Claude Desktop bridge: it connects the extension to the local host installed by the user (`allowed_origins` restricted to this extension). |
 
-| `nativeMessaging` (opcional) | Solicitado solo si el usuario activa el puente con Claude Desktop: comunica la extensión con el host local instalado por el usuario (`allowed_origins` restringido a esta extensión). |
+**Does it use remote code?** No.
 
-**¿Usa código remoto?** No.
+**Data it collects** (tick):
 
-**Datos que recopila** (marcar):
-
-| Categoría CWS | ¿Marcar? | Motivo |
+| CWS category | Tick? | Reason |
 |---|---|---|
-| Web history | **Sí** | Títulos/dominios de pestañas se transmiten a Anthropic cuando el usuario activa Claude |
-| Website content | No | No se lee contenido de páginas |
-| Authentication information | No | La API key del usuario no se transmite al desarrollador; se usa solo hacia Anthropic |
+| Web history | **Yes** | Tab titles/domains are transmitted to Anthropic when the user enables Claude |
+| Website content | No | Page content is not read |
+| Authentication information | No | The user's API key is not transmitted to the developer; it is only used towards Anthropic |
 | PII / Health / Financial / Location / Communications / User activity | No | — |
 
-**Certificaciones** (marcar las tres): no se venden datos a terceros; no se usan para fines ajenos al propósito único; no se usan para solvencia/crédito.
+**Certifications** (tick all three): data is not sold to third parties; it is not used for purposes unrelated to the single purpose; it is not used for creditworthiness/lending.
 
-## Checklist previa al envío
+## Pre-submission checklist
 
-- [ ] `npm run prepublish:cws` en verde
-- [ ] Smoke manual (README §Smoke) en Chrome estable Windows + macOS
-- [ ] Reemplazar `security@TU-DOMINIO.example` en PRIVACY.md y SECURITY.md
-- [ ] Privacy policy publicada y URL en el dashboard
-- [ ] Capturas 1280×800
-- [ ] Verificación 2FA de la cuenta de desarrollador y email de contacto verificado
-- [ ] No usar el logo de Claude/Anthropic; mencionar "Claude" solo en texto descriptivo
+- [ ] `npm run prepublish:cws` passes
+- [ ] Manual smoke test ([TESTING.md](TESTING.md#manual-smoke-test)) on stable Chrome, Windows + macOS
+- [ ] Privacy policy published and its URL entered in the dashboard
+- [ ] 1280×800 screenshots
+- [ ] Developer account 2FA verification and verified contact email
+- [ ] Do not use the Claude/Anthropic logo; mention "Claude" only in descriptive text

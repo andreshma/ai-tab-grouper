@@ -1,32 +1,34 @@
-# ADR-002: Hardening enterprise — política gestionada, proxy corporativo y credenciales efímeras
+# ADR-0002: Enterprise hardening - managed policy, corporate proxy and ephemeral credentials
 
-**Status:** Accepted — 2026-11-19 · Supersedes la sección "API key en storage.local" de ADR-001
+## Status
+
+Accepted - 2026-11-19 · Supersedes the "API key in storage.local" section of [ADR-0001](0001-hybrid-ai-provider.md)
 
 ## Context
 
-ADR-001 aceptó guardar la API key en `chrome.storage.local` (texto plano en el perfil). Para despliegue corporativo se requiere: secretos en vault, control central de TI, auditoría/DLP y cumplimiento de la política de divulgación de Chrome Web Store (consentimiento explícito, julio 2026).
+[ADR-0001](0001-hybrid-ai-provider.md) accepted storing the API key in `chrome.storage.local` (plain text in the profile). Corporate deployment requires: secrets in a vault, central IT control, audit/DLP and compliance with the Chrome Web Store disclosure policy (explicit consent, July 2026).
 
 ## Decision
 
-1. **Política gestionada** (`chrome.storage.managed` + `managed_schema.json`), desplegable por GPO / Intune / Google Admin. Regla: la política **solo restringe** (proveedores, rutas, auto, modelos, BYOK, almacenamiento de key, exclusiones); única excepción: `proxyEndpoint`.
-2. **Modo proxy**: si TI define `proxyEndpoint` (HTTPS), la extensión no envía API key; el proxy (Cloud Run / Lambda / APIM) inyecta la key desde Secret Manager/Key Vault, autentica por SSO (`credentials:'include'`), aplica DLP, rate limit, allowlist de modelos y auditoría. CORS del proxy permite solo `chrome-extension://<ID>`.
-3. **BYOK efímero por defecto**: `storage.session` (memoria). Persistir es opt-in; TI puede prohibirlo.
-4. **Consentimiento versionado** (`CONSENT_VERSION`) obligatorio antes de cualquier envío remoto.
-5. **CSP estricta** (`default-src 'self'`, sin inline), validación de remitente de mensajes, gate `cws-check` en CI.
+1. **Managed policy** (`chrome.storage.managed` + `managed_schema.json`), deployable through GPO / Intune / Google Admin. Rule: the policy **only restricts** (providers, paths, auto, models, BYOK, key storage, exclusions); the single exception is `proxyEndpoint`.
+2. **Proxy mode**: if IT sets `proxyEndpoint` (HTTPS), the extension sends no API key; the proxy (Cloud Run / Lambda / APIM) injects the key from Secret Manager/Key Vault, authenticates through SSO (`credentials:'include'`), and applies DLP, rate limiting, a model allowlist and auditing. The proxy's CORS allows only `chrome-extension://<ID>`.
+3. **Ephemeral BYOK by default**: `storage.session` (memory). Persisting is opt-in; IT can forbid it.
+4. **Versioned consent** (`CONSENT_VERSION`), mandatory before any remote transmission.
+5. **Strict CSP** (`default-src 'self'`, no inline), message sender validation, `cws-check` gate in CI.
 
 ## Consequences
 
-- ✅ La key sale del endpoint en despliegue corporativo; trazabilidad central.
-- ✅ TI puede imponer modo "solo local" (`allowedProviders: ["nano","heuristic"]`).
-- ⚠️ BYOK en sesión exige re-ingresar la key tras reiniciar Chrome (fricción aceptada).
-- ⚠️ `connect-src https:` necesario para proxy configurable; mitigado (endpoint solo desde política, sin código remoto).
-- ⚠️ Requiere construir/operar el proxy (fuera del alcance de la extensión).
+- ✅ The key leaves the endpoint in corporate deployments; central traceability.
+- ✅ IT can enforce a "local only" mode (`allowedProviders: ["nano","heuristic"]`).
+- ⚠️ Session BYOK requires re-entering the key after restarting Chrome (accepted friction).
+- ⚠️ `connect-src https:` is needed for a configurable proxy; mitigated (endpoint only from policy, no remote code).
+- ⚠️ Requires building/operating the proxy (out of scope for the extension).
 
-## Alternatives considered
+## Alternatives
 
-| Alternativa | Descartada por |
+| Alternative | Rejected because |
 |---|---|
-| Cifrar la key en `storage.local` con clave derivada local | Teatro de seguridad: la clave de descifrado vive junto al ciphertext |
-| `chrome.identity` + OAuth propio hacia backend | Requiere permiso `identity` y backend de identidad; el SSO del proxy (IAP/Entra App Proxy) cubre lo mismo sin permisos extra |
-| `optional_host_permissions` amplio para el proxy | Banderas de revisión en CWS; CORS en el proxy evita el permiso |
-| Usar la sesión de claude.ai del usuario | Prohibido por Anthropic (no intermediar credenciales de suscripción) y por CWS (eludir restricciones de servicios IA) |
+| Encrypt the key in `storage.local` with a locally derived key | Security theater: the decryption key lives next to the ciphertext |
+| `chrome.identity` + own OAuth towards a backend | Requires the `identity` permission and an identity backend; the proxy's SSO (IAP/Entra App Proxy) covers the same need with no extra permissions |
+| Broad `optional_host_permissions` for the proxy | Review flags in CWS; CORS on the proxy avoids the permission |
+| Use the user's claude.ai session | Forbidden by Anthropic (no brokering of subscription credentials) and by CWS (circumventing restrictions of AI services) |

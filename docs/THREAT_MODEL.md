@@ -1,54 +1,54 @@
-# Threat Model — AI Tab Grouper (STRIDE + OWASP LLM Top 10)
+# Threat Model - AI Tab Grouper (STRIDE + OWASP LLM Top 10)
 
-_Versión 1.1.0 · 2026-11-19_
+_Version 1.1.0 · 2026-11-19_
 
-## Activos
+## Assets
 
-| Activo | Clasificación |
+| Asset | Classification |
 |---|---|
-| Títulos/URLs de pestañas (actividad de navegación) | Confidencial (puede contener PII, datos de negocio) |
-| API key de Anthropic (BYOK) | Secreto |
-| Integridad de la organización de pestañas | Baja |
+| Tab titles/URLs (browsing activity) | Confidential (may contain PII, business data) |
+| Anthropic API key (BYOK) | Secret |
+| Integrity of the tab organization | Low |
 
 ## Trust boundaries
 
 ```
-[Páginas web] ──títulos/URLs (no confiable)──► [Service worker] ──HTTPS──► [api.anthropic.com | Proxy corp]
-                                                   ▲      │
-                              [Popup/Options] ─────┘      └──► chrome.tabGroups
-                              [Política TI (managed storage, confiable)]
+[Web pages] ──titles/URLs (untrusted)──► [Service worker] ──HTTPS──► [api.anthropic.com | Corp proxy]
+                                             ▲      │
+                        [Popup/Options] ─────┘      └──► chrome.tabGroups
+                        [IT policy (managed storage, trusted)]
 ```
 
-## Amenazas y controles
+## Threats and controls
 
-| # | STRIDE / OWASP | Amenaza | Control | Riesgo residual |
+| # | STRIDE / OWASP | Threat | Control | Residual risk |
 |---|---|---|---|---|
-| T1 | Information disclosure · LLM02 | Fuga de PII/tokens en URLs hacia el proveedor | Sin query/fragment; redacción email/ID/UUID/números; `sendPath` off por política; `excludedHosts` locales; consentimiento versionado | Bajo: títulos pueden contener datos sensibles → `excludedHosts` / Nano / `allowedProviders` |
-| T2 | Information disclosure | Robo de API key desde el perfil | Default `storage.session` (memoria); política `apiKeyStorage=session` o `proxyEndpoint` (key fuera del equipo); `credentials:'omit'` hacia Anthropic | Bajo con proxy; Medio con BYOK persistente (opt-in) |
-| T3 | Tampering · LLM01 | Prompt injection vía título de página | Delimitador `<tabs>` con `<` escapado; system prompt "datos, no instrucciones"; `tool_choice` forzado; `normalizeResult` (ids conocidos, nombre saneado, bidi/zero-width eliminados, color whitelist) | Bajo: peor caso, nombre/agrupación incorrecta; sin acciones destructivas posibles |
-| T4 | Elevation of privilege | Página/otra extensión invoca acciones del SW | Sin content scripts ni `externally_connectable`; `isTrustedSender` (id + origen de la extensión) | Muy bajo |
-| T5 | Tampering | Código remoto / XSS en páginas de extensión | CSP estricta; sin `innerHTML`; ESLint + `cws-check` bloquean sinks | Muy bajo |
-| T6 | Spoofing | Proxy falso / MITM | Proxy solo desde managed storage (TI), solo HTTPS sin credenciales embebidas; `redirect:'error'` | Bajo |
-| T7 | DoS · LLM10 | Costo descontrolado / rate limit | Debounce, throttle por ventana, `maxTabsPerRequest`, retry acotado, circuit breaker | Bajo |
-| T8 | Repudiation | Sin trazabilidad de qué se envió | Proxy corporativo centraliza auditoría/DLP; la extensión no loguea datos de pestañas | Bajo con proxy |
-| T9 | Supply chain | Dependencia comprometida | 0 deps runtime; lockfile; `npm audit`; SBOM; CodeQL; Trojan Source scan | Bajo |
-| T10 | LLM05/LLM06 | Output del modelo ejecuta acciones | Única acción posible: `tabs.group`/`tabGroups.update` sobre ids validados | Muy bajo |
+| T1 | Information disclosure · LLM02 | Leak of PII/tokens in URLs to the provider | No query/fragment; email/ID/UUID/number redaction; `sendPath` off by policy; local `excludedHosts`; versioned consent | Low: titles may contain sensitive data → `excludedHosts` / Nano / `allowedProviders` |
+| T2 | Information disclosure | API key theft from the profile | Default `storage.session` (memory); policy `apiKeyStorage=session` or `proxyEndpoint` (key off the device); `credentials:'omit'` towards Anthropic | Low with proxy; Medium with persistent BYOK (opt-in) |
+| T3 | Tampering · LLM01 | Prompt injection through the page title | `<tabs>` delimiter with `<` escaped; "data, not instructions" system prompt; forced `tool_choice`; `normalizeResult` (known ids, sanitized name, bidi/zero-width removed, color whitelist) | Low: worst case, wrong name/grouping; no destructive actions possible |
+| T4 | Elevation of privilege | A page/another extension invokes SW actions | No content scripts or `externally_connectable`; `isTrustedSender` (extension id + origin) | Very low |
+| T5 | Tampering | Remote code / XSS in extension pages | Strict CSP; no `innerHTML`; ESLint + `cws-check` block sinks | Very low |
+| T6 | Spoofing | Fake proxy / MITM | Proxy only from managed storage (IT), HTTPS only with no embedded credentials; `redirect:'error'` | Low |
+| T7 | DoS · LLM10 | Runaway cost / rate limit | Debounce, per-window throttle, `maxTabsPerRequest`, bounded retry, circuit breaker | Low |
+| T8 | Repudiation | No traceability of what was sent | The corporate proxy centralizes audit/DLP; the extension does not log tab data | Low with proxy |
+| T9 | Supply chain | Compromised dependency | 0 runtime deps; lockfile; `npm audit`; SBOM; CodeQL; Trojan Source scan | Low |
+| T10 | LLM05/LLM06 | Model output executes actions | Only possible action: `tabs.group`/`tabGroups.update` on validated ids | Very low |
 
-### Puente Claude Desktop (v1.2.0)
+### Claude Desktop bridge (v1.2.0)
 
-| # | STRIDE / OWASP | Amenaza | Control | Riesgo residual |
+| # | STRIDE / OWASP | Threat | Control | Residual risk |
 |---|---|---|---|---|
-| T11 | Tampering · LLM01 (indirecta) | Título malicioso instruye a Claude Desktop a usar **otras** herramientas (email, archivos) | Salida `list_tabs` marcada "no confiable" y delimitada con `<` escapado; instrucciones del servidor MCP; la extensión no expone contenido de páginas; HITL del cliente en tools sensibles | **Medio**: depende de la robustez del modelo y de qué otros MCP tenga el usuario. Recomendar aprobación manual de herramientas en Claude Desktop |
-| T12 | Spoofing / EoP | Otro proceso local se conecta al pipe/socket y lee pestañas | Token 256-bit efímero (archivo 0600 en dir 0700), comparación en tiempo constante, socket 0600, borrado al cerrar | Bajo (mismo usuario = mismo trust boundary) |
-| T13 | Spoofing | Otra extensión/app lanza el host | `allowed_origins` = solo este ID; registro en HKCU/perfil del usuario | Muy bajo |
-| T14 | Tampering | Claude envía ids arbitrarios / ventanas ajenas | Validación en MCP y en extensión; solo ids elegibles (no pinned, http(s), no excluidos) | Muy bajo |
-| T15 | DoS | Mensajes enormes / flood | Límites: 1 MB host→Chrome, 8 MB Chrome→host, 4 MB por línea IPC, 8 clientes, timeouts 15-20 s, máx. 200 pestañas | Bajo |
+| T11 | Tampering · LLM01 (indirect) | A malicious title instructs Claude Desktop to use **other** tools (email, files) | `list_tabs` output marked "untrusted" and delimited with `<` escaped; MCP server instructions; the extension does not expose page content; client-side HITL on sensitive tools | **Medium**: depends on the robustness of the model and on which other MCP servers the user has. Recommend manual tool approval in Claude Desktop |
+| T12 | Spoofing / EoP | Another local process connects to the pipe/socket and reads tabs | Ephemeral 256-bit token (0600 file in a 0700 dir), constant-time comparison, 0600 socket, deleted on close | Low (same user = same trust boundary) |
+| T13 | Spoofing | Another extension/app launches the host | `allowed_origins` = this ID only; registration in HKCU/the user's profile | Very low |
+| T14 | Tampering | Claude sends arbitrary ids / other windows | Validation in MCP and in the extension; eligible ids only (not pinned, http(s), not excluded) | Very low |
+| T15 | DoS | Huge messages / flood | Limits: 1 MB host→Chrome, 8 MB Chrome→host, 4 MB per IPC line, 8 clients, 15-20 s timeouts, max. 200 tabs | Low |
 
-## Decisiones de riesgo aceptado
+## Accepted risk decisions
 
-- BYOK persistente (`storage.local`) es opt-in del usuario y deshabilitable por política. Ver ADR-002.
-- `connect-src https:` en CSP para permitir el proxy configurable; compensado porque el endpoint solo puede venir de política gestionada y no hay código remoto.
+- Persistent BYOK (`storage.local`) is a user opt-in and can be disabled by policy. See [ADR-0002](adr/0002-enterprise-hardening.md).
+- `connect-src https:` in the CSP to allow the configurable proxy; compensated because the endpoint can only come from managed policy and there is no remote code.
 
-## Revisión
+## Review
 
-Revisar en cada cambio de: datos enviados (→ bump `CONSENT_VERSION`), permisos, proveedores o CSP.
+Review on every change to: data sent (→ bump `CONSENT_VERSION`), permissions, providers or CSP.
