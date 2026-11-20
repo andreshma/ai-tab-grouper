@@ -97,8 +97,14 @@ server.on('error', (err) => {
   log('IPC server error:', err.message);
   shutdown(1);
 });
+// A Unix socket is created with the process umask, so a chmod after listen
+// leaves a window where it is wider than 0600. Narrow the umask for the bind.
+const previousUmask = isPosix ? process.umask(0o177) : 0;
 server.listen(address, () => {
-  if (isPosix) chmodSync(address, 0o600);
+  if (isPosix) {
+    process.umask(previousUmask);
+    chmodSync(address, 0o600);
+  }
   log('ready', address);
 });
 
