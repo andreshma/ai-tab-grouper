@@ -1,6 +1,6 @@
 # Threat Model - AI Tab Grouper (STRIDE + OWASP LLM Top 10)
 
-_Version 1.1.0 · 2026-11-19_
+_Applies to version 1.4.2 · last reviewed 2026-11-20_
 
 ## Assets
 
@@ -14,10 +14,15 @@ _Version 1.1.0 · 2026-11-19_
 
 ```
 [Web pages] ──titles/URLs (untrusted)──► [Service worker] ──HTTPS──► [api.anthropic.com | Corp proxy]
-                                             ▲      │
-                        [Popup/Options] ─────┘      └──► chrome.tabGroups
-                        [IT policy (managed storage, trusted)]
+                                             ▲   │  ▲
+                        [Popup/Options] ─────┘   │  └──native messaging──► [Native host] ◄──pipe + token── [MCP server] ◄──stdio── [Claude Desktop]
+                        [IT policy (managed storage, trusted)]                 └──► chrome.tabGroups
 ```
+
+The bridge (native host, MCP server and Claude Desktop) exists only when the
+user installs and enables it. Diagrams: [DIAGRAMS.md](DIAGRAMS.md#trust-boundaries).
+The red-team pass over these controls is in
+[ADVERSARIAL_REVIEW.md](ADVERSARIAL_REVIEW.md).
 
 ## Threats and controls
 
@@ -25,16 +30,16 @@ _Version 1.1.0 · 2026-11-19_
 |---|---|---|---|---|
 | T1 | Information disclosure · LLM02 | Leak of PII/tokens in URLs to the provider | No query/fragment; email/ID/UUID/number redaction; `sendPath` off by policy; local `excludedHosts`; versioned consent | Low: titles may contain sensitive data → `excludedHosts` / Nano / `allowedProviders` |
 | T2 | Information disclosure | API key theft from the profile | Default `storage.session` (memory); policy `apiKeyStorage=session` or `proxyEndpoint` (key off the device); `credentials:'omit'` towards Anthropic | Low with proxy; Medium with persistent BYOK (opt-in) |
-| T3 | Tampering · LLM01 | Prompt injection through the page title | `<tabs>` delimiter with `<` escaped; "data, not instructions" system prompt; forced `tool_choice`; `normalizeResult` (known ids, sanitized name, bidi/zero-width removed, color whitelist) | Low: worst case, wrong name/grouping; no destructive actions possible |
+| T3 | Tampering · LLM01 | Prompt injection through the page title | `<tabs>` delimiter with `<` escaped; "data, not instructions" system prompt; forced `tool_choice`; `normalizeResult` (known ids, sanitized name, bidi/zero-width removed, color whitelist) | Low: worst case, wrong names or groupings (through the bridge, also ungrouping); tabs are never closed, navigated or read |
 | T4 | Elevation of privilege | A page/another extension invokes SW actions | No content scripts or `externally_connectable`; `isTrustedSender` (extension id + origin) | Very low |
 | T5 | Tampering | Remote code / XSS in extension pages | Strict CSP; no `innerHTML`; ESLint + `cws-check` block sinks | Very low |
 | T6 | Spoofing | Fake proxy / MITM | Proxy only from managed storage (IT), HTTPS only with no embedded credentials; `redirect:'error'` | Low |
 | T7 | DoS · LLM10 | Runaway cost / rate limit | Debounce, per-window throttle, `maxTabsPerRequest`, bounded retry, circuit breaker | Low |
 | T8 | Repudiation | No traceability of what was sent | The corporate proxy centralizes audit/DLP; the extension does not log tab data | Low with proxy |
 | T9 | Supply chain | Compromised dependency | 0 runtime deps; lockfile; `npm audit`; SBOM; CodeQL; Trojan Source scan | Low |
-| T10 | LLM05/LLM06 | Model output executes actions | Only possible action: `tabs.group`/`tabGroups.update` on validated ids | Very low |
+| T10 | LLM05/LLM06 | Model output executes actions | Only possible actions: `tabs.group`/`tabGroups.update` on validated ids and, through the bridge, `tabs.ungroup` | Very low |
 
-### Claude Desktop bridge (v1.2.0)
+### Claude Desktop bridge (since 1.2.0)
 
 | # | STRIDE / OWASP | Threat | Control | Residual risk |
 |---|---|---|---|---|

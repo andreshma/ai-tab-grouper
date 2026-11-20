@@ -69,5 +69,7 @@ the same method allowlist. See [bridge/README.md](../bridge/README.md) and
 
 ## Decisions
 
-Architectural decisions are recorded in [docs/adr/](adr/README.md). The threat
-model is in [THREAT_MODEL.md](THREAT_MODEL.md).
+Architectural decisions are recorded in [docs/adr/](adr/README.md). Diagrams
+are in [DIAGRAMS.md](DIAGRAMS.md), the threat model in
+[THREAT_MODEL.md](THREAT_MODEL.md) and the red-team pass in
+[ADVERSARIAL_REVIEW.md](ADVERSARIAL_REVIEW.md).

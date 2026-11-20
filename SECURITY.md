@@ -40,7 +40,7 @@ unless you prefer otherwise.
 | Secrets | The user's own API key lives in `storage.session` by default; the `proxyEndpoint` policy moves the key out of the endpoint entirely (vault-backed proxy) |
 | Consent | Nothing leaves the device (API, proxy or bridge) without the current consent version accepted |
 | Data minimization | Title, host and optionally a redacted path. Never query, fragment, page content or cookies; PII redaction; `excludedHosts` are never sent |
-| Prompt injection (OWASP LLM01) | Tab data is delimited and escaped; model output is forced into a schema and validated (known ids, sanitized names, whitelisted colors); the model can do nothing but group tabs |
+| Prompt injection (OWASP LLM01) | Tab data is delimited and escaped; model output is forced into a schema and validated (known ids, sanitized names, whitelisted colors); the model can do nothing but group and ungroup tabs |
 | Messaging | Only the extension's own pages are trusted (`sender.id` plus the `chrome-extension://<id>` origin) |
 | Bridge | Zero runtime dependencies; method allowlist in both the native host and the extension; ephemeral token in a user-only directory; `allowed_origins` restricted to this extension's id |
 | Supply chain | Zero runtime dependencies; dev dependencies audited (`npm audit`), CycloneDX SBOM, CodeQL, CI actions pinned by commit SHA |

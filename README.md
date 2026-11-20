@@ -115,9 +115,9 @@ published on the Chrome Web Store: install it from source for now.
 ## Documentation
 
 - [User Manual](docs/USAGE.md) — install, engines, bridge, settings, troubleshooting
-- [Architecture](docs/ARCHITECTURE.md) and [decision records](docs/adr/README.md)
+- [Architecture](docs/ARCHITECTURE.md), [diagrams](docs/DIAGRAMS.md) and [decision records](docs/adr/README.md)
 - [Testing](docs/TESTING.md) and the [Windows end-to-end plan](docs/E2E_TEST_PLAN_WINDOWS.md)
-- [Threat model](docs/THREAT_MODEL.md) · [Enterprise deployment](docs/ENTERPRISE_DEPLOYMENT.md)
+- [Threat model](docs/THREAT_MODEL.md) · [Adversarial review](docs/ADVERSARIAL_REVIEW.md) · [Enterprise deployment](docs/ENTERPRISE_DEPLOYMENT.md)
 - [Chrome Web Store listing](docs/STORE_LISTING.md) · [Releasing](RELEASING.md) · [Changelog](CHANGELOG.md)
 
 ## Community

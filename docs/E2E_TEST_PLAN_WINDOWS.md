@@ -1,13 +1,13 @@
 # E2E test plan - Windows · Chrome · Claude Desktop
 
-**Version:** 1.2.0 · **Environment:** Windows 11, stable Chrome, Claude Desktop, Node ≥ 20
+**Applies to:** 1.4.2 · **Environment:** Windows 11, stable Chrome, Claude Desktop, Node ≥ 20
 **Exit criteria:** `doctor` 100% PASS + TC-01…TC-11 in PASS; TC-10 with no actions other than grouping.
 
 ## Setup (≈10 min)
 
 | Step | Action | Expected result |
 |---|---|---|
-| S1 | Unzip `ai-tab-grouper-source.zip` to a **stable** path (PowerShell below) | Folder `%USERPROFILE%\ai-tab-grouper` |
+| S1 | Clone the repository and deploy the runtime to a **stable** path (PowerShell below) | Folder `%USERPROFILE%\ai-tab-grouper` |
 | S2 | `chrome://extensions` → Developer mode → **Load unpacked** → `%USERPROFILE%\ai-tab-grouper` | The "Configuración" (Settings) page opens; no errors under *Service worker* |
 | S3 | In Configuración → Claude Desktop section → **"Copiar"** (Copy) the ID | ID made of 32 letters a-p |
 | S4 | `cd $env:USERPROFILE\ai-tab-grouper\bridge; node install.mjs --extension-id <ID> --configure-claude` | ✓ "Host registrado" (Host registered) · ✓ "Claude Desktop configurado" (Claude Desktop configured; with backup) |
@@ -16,16 +16,19 @@
 | S7 | `node doctor.mjs` | Every line is `PASS` |
 
 ```powershell
-# S1 - adjust the zip path to wherever you downloaded it
-Expand-Archive "$env:USERPROFILE\Downloads\ai-tab-grouper-source.zip" -DestinationPath $env:USERPROFILE -Force
+# S1 - clone anywhere; the deploy step copies the runtime to %USERPROFILE%\ai-tab-grouper
 node --version   # >= v20
+git clone https://github.com/andreshma/ai-tab-grouper.git
+cd ai-tab-grouper
+npm ci
+npm run deploy:local
 ```
 
 ## Test cases
 
 | ID | Case | Steps | Expected | Result |
 |---|---|---|---|---|
-| TC-01 | Diagnostics | `node doctor.mjs` | 9 × PASS, exit 0 | |
+| TC-01 | Diagnostics | `node doctor.mjs` | Every line `PASS`, exit 0 | |
 | TC-02 | Tools visible | Claude Desktop → tools/connectors menu | `ai-tab-grouper` with 3 tools | |
 | TC-03 | List | Open ~8 assorted tabs (incl. one URL with `?token=abc`) → "List my Chrome tabs" | Claude lists titles/domains; `token=abc` does **not** appear | |
 | TC-04 | Group by topic | "Organize my Chrome tabs by topic" | Topic groups with colors; popup: *"Claude Desktop · N pestañas en M grupos"* (N tabs in M groups) | |

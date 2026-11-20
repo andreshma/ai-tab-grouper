@@ -20,7 +20,7 @@ The extension must classify tabs by topic with good quality, work without config
 
 - ✅ High quality by default; works without a key; no backend of our own (zero infrastructure, zero operating cost).
 - ✅ Claude failures (429/529/network) do not block the user.
-- ⚠️ **API key in `chrome.storage.local`**: there is no vault in the browser. Mitigation: dedicated key with a spend limit, never synced, strict CSP. Deliberate deviation from the "secrets in a vault" standard.
+- ⚠️ **API key in `chrome.storage.local`**: there is no vault in the browser. Mitigation: dedicated key with a spend limit, never synced, strict CSP. Deliberate deviation from the usual rule of keeping secrets in a vault.
 - ⚠️ Titles/hosts leave for Anthropic when Claude is used (redacted). `excludedHosts` and `preferOnDevice` cover sensitive users.
 - ⚠️ Nano may not be exposed in service workers depending on the version → it is skipped.
 - Prompt caching does not apply: the prefix (system + tool) is below the minimum cacheable size.
@@ -29,7 +29,7 @@ The extension must classify tabs by topic with good quality, work without config
 
 | Alternative | Rejected because |
 |---|---|
-| Own backend proxy (key in a vault, central rate limit) | Infrastructure + cost + operations for a personal extension; recommended if it is distributed to the organization (see next steps) |
+| Own backend proxy (key in a vault, central rate limit) | Infrastructure + cost + operations for a personal extension; recommended when the extension is deployed across an organization (see next steps) |
 | Nano only | Availability depends on hardware/version; lower quality in semantic classification |
 | Heuristic only | Does not group by task (e.g. "Travel" = skyscanner + booking) |
 | Embeddings + local clustering | Requires an embeddings model in the browser; more complexity; less natural group names |
