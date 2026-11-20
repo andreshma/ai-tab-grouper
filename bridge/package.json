@@ -1,6 +1,6 @@
 {
   "name": "ai-tab-grouper-bridge",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "Local bridge: Claude Desktop (MCP) <-> Chrome extension (native messaging). Zero runtime dependencies.",
   "type": "module",

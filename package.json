@@ -1,6 +1,6 @@
 {
   "name": "ai-tab-grouper",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "Chrome MV3 extension that groups tabs by topic using Claude, Gemini Nano or a domain heuristic.",
   "type": "module",
@@ -12,7 +12,7 @@
     "audit:deps": "npm audit --audit-level=high",
     "sbom": "npm sbom --sbom-format cyclonedx > dist/sbom.cdx.json",
     "package": "web-ext build --source-dir . --artifacts-dir dist --filename ai-tab-grouper-{version}.zip --overwrite-dest --ignore-files CLAUDE.md .claude \".claude/**\" .gitignore bridge \"bridge/**\" test \"test/**\" docs \"docs/**\" scripts \"scripts/**\" coverage \"coverage/**\" .github \".github/**\" dist \"*.md\" \"package*.json\" \"eslint.config.js\"",
-    "cws:check": "node scripts/cws-check.mjs dist/ai-tab-grouper-1.4.0.zip",
+    "cws:check": "node scripts/cws-check.mjs dist/ai-tab-grouper-1.4.1.zip",
     "deploy:local": "node scripts/deploy-local.mjs",
     "prepublish:cws": "npm run lint && npm run test:coverage && npm run audit:deps && npm run package && npm run cws:check"
   },

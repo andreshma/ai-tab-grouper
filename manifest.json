@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Tab Grouper",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual.",
   "minimum_chrome_version": "120",
   "permissions": ["tabs", "tabGroups", "storage"],

@@ -70,7 +70,7 @@ export async function runDoctor({ browser = 'chrome', env = process.env, platfor
 
   // 2. Native host registration
   const home = env.AI_TAB_GROUPER_HOME ?? homedir();
-  const target = hostManifestTarget(/** @type {any} */ (browser), platform, home);
+  const target = hostManifestTarget(/** @type {any} */ (browser), platform, home, { sandboxed: Boolean(env.AI_TAB_GROUPER_HOME) });
   const manifestFile = resolveManifestFile(target);
   let extensionId = '';
   if (!manifestFile || !existsSync(manifestFile)) {

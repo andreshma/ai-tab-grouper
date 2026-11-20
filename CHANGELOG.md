@@ -12,6 +12,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 ### Security
 - `web-ext` ^10.8.0 (dev): elimina 3 vulnerabilidades críticas y 5 altas de la cadena de build (`npm audit` 0 high/critical).
 
+## [1.4.1] - 2026-11-20
+
+### Fixed
+- Instalador del puente: con `AI_TAB_GROUPER_HOME` definido (instalación aislada, usada por los tests) ya no escribe ni borra la clave `HKCU\…\NativeMessagingHosts` en Windows. Ejecutar `npm test` en Windows reemplazaba el registro real por un manifest temporal con un ID de prueba y dejaba el popup en "Claude Desktop: reconectando…". `doctor` aplica la misma regla.
+
 ## [1.4.0] - 2026-11-19
 
 ### Added

@@ -27,18 +27,25 @@ export const isExtensionId = (id) => /^[a-p]{32}$/.test(String(id ?? ''));
 
 /**
  * Per-browser locations. Windows uses the registry (HKCU) pointing to a JSON file.
+ *
+ * `sandboxed` (home overridden via AI_TAB_GROUPER_HOME) never resolves to the
+ * registry: HKCU is machine-global state that no env override can redirect, so
+ * a sandboxed install (tests) would otherwise replace the user's real
+ * registration with a throwaway manifest.
  * @param {'chrome'|'edge'|'chromium'} browser
  * @param {NodeJS.Platform} platform
  * @param {string} home
+ * @param {{sandboxed?: boolean}} [opts]
+ * @returns {{registryKey?: string, file?: string}}
  */
-export function hostManifestTarget(browser, platform, home) {
+export function hostManifestTarget(browser, platform, home, { sandboxed = false } = {}) {
   const vendor = {
     chrome: { reg: 'Google\\Chrome', mac: 'Google/Chrome', linux: 'google-chrome' },
     edge: { reg: 'Microsoft\\Edge', mac: 'Microsoft Edge', linux: 'microsoft-edge' },
     chromium: { reg: 'Chromium', mac: 'Chromium', linux: 'chromium' },
   }[browser];
   if (!vendor) throw new Error(`Navegador no soportado: ${browser}`);
-  if (platform === 'win32') return { registryKey: `HKCU\\Software\\${vendor.reg}\\NativeMessagingHosts\\${HOST_NAME}` };
+  if (platform === 'win32' && !sandboxed) return { registryKey: `HKCU\\Software\\${vendor.reg}\\NativeMessagingHosts\\${HOST_NAME}` };
   if (platform === 'darwin') return { file: join(home, 'Library', 'Application Support', vendor.mac, 'NativeMessagingHosts', `${HOST_NAME}.json`) };
   return { file: join(home, '.config', vendor.linux, 'NativeMessagingHosts', `${HOST_NAME}.json`) };
 }
@@ -130,7 +137,7 @@ function main() {
   const opts = parseArgs(process.argv.slice(2));
   const { platform, env } = process;
   const home = env.AI_TAB_GROUPER_HOME ?? homedir();
-  const target = hostManifestTarget(/** @type {any} */ (opts.browser), platform, home);
+  const target = hostManifestTarget(/** @type {any} */ (opts.browser), platform, home, { sandboxed: Boolean(env.AI_TAB_GROUPER_HOME) });
   const stateDir = bridgeDir();
   const manifestFile = target.file ?? join(stateDir, `${HOST_NAME}.json`);
   const launcher = launcherPath(stateDir, platform);

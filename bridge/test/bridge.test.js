@@ -125,6 +125,15 @@ describe('installer helpers', () => {
     assert.match(buildLauncher('win32', 'C:\\node.exe', 'C:\\h.js'), /^@echo off\r\n"C:\\node.exe" "C:\\h.js" %\*/);
     assert.ok(hostManifestTarget('chrome', 'win32', 'C:\\U').registryKey.endsWith('NativeMessagingHosts\\com.aitabgrouper.bridge'));
     assert.match(hostManifestTarget('edge', 'darwin', '/Users/a').file, /Microsoft Edge\/NativeMessagingHosts/);
+  });
+
+  it('never targets the Windows registry when the home is sandboxed (regression: tests clobbered the real HKCU registration)', () => {
+    for (const browser of ['chrome', 'edge', 'chromium']) {
+      const target = hostManifestTarget(/** @type {any} */ (browser), 'win32', 'C:\\tmp\\atg', { sandboxed: true });
+      assert.equal(target.registryKey, undefined, browser);
+      assert.match(String(target.file), /NativeMessagingHosts.com\.aitabgrouper\.bridge\.json$/, browser);
+    }
+    assert.ok(hostManifestTarget('chrome', 'win32', 'C:\\U', { sandboxed: false }).registryKey, 'real installs still use HKCU');
     assert.match(launcherPath('C:\\x', 'win32'), /host\.bat$/, 'Windows uses .bat (documented by Chrome)');
   });
 

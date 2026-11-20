@@ -13,7 +13,7 @@ import { ipcRequest } from './ipc.js';
 import { LineDecoder } from './protocol.js';
 import { formatToolResult, TOOLS, validateToolArgs } from './tools.js';
 
-export const SERVER_INFO = Object.freeze({ name: 'ai-tab-grouper', title: 'AI Tab Grouper (Chrome)', version: '1.4.0' });
+export const SERVER_INFO = Object.freeze({ name: 'ai-tab-grouper', title: 'AI Tab Grouper (Chrome)', version: '1.4.1' });
 /** Newest first. We echo the client's version when supported, else offer our newest. */
 export const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze(['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']);
 
