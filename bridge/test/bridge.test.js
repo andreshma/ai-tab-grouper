@@ -21,6 +21,8 @@ import { formatToolResult, TOOLS, UNTRUSTED_NOTICE, validateToolArgs } from '../
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const EXT_ID = 'abcdefghijklmnopabcdefghijklmnop';
+// POSIX permission bits are meaningless on Windows, where the state dir inherits the profile ACL.
+const IS_POSIX = process.platform !== 'win32';
 
 describe('protocol', () => {
   it('round-trips native frames across arbitrary chunking', () => {
@@ -124,7 +126,7 @@ describe('installer helpers', () => {
     assert.equal(m.type, 'stdio');
     assert.match(buildLauncher('win32', 'C:\\node.exe', 'C:\\h.js'), /^@echo off\r\n"C:\\node.exe" "C:\\h.js" %\*/);
     assert.ok(hostManifestTarget('chrome', 'win32', 'C:\\U').registryKey.endsWith('NativeMessagingHosts\\com.aitabgrouper.bridge'));
-    assert.match(hostManifestTarget('edge', 'darwin', '/Users/a').file, /Microsoft Edge\/NativeMessagingHosts/);
+    assert.match(hostManifestTarget('edge', 'darwin', '/Users/a').file, /Microsoft Edge[\\/]NativeMessagingHosts/);
   });
 
   it('never targets the Windows registry when the home is sandboxed (regression: tests clobbered the real HKCU registration)', () => {
@@ -153,7 +155,7 @@ describe('installer helpers', () => {
     const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
     assert.deepEqual(manifest.allowed_origins, [`chrome-extension://${EXT_ID}/`]);
     assert.ok(existsSync(manifest.path));
-    assert.equal(statSync(manifest.path).mode & 0o777, 0o700, 'launcher user-only');
+    if (IS_POSIX) assert.equal(statSync(manifest.path).mode & 0o777, 0o700, 'launcher user-only');
     const cfg = JSON.parse(readFileSync(env.CLAUDE_DESKTOP_CONFIG, 'utf8'));
     assert.equal(cfg.theme, 'dark');
     assert.ok(cfg.mcpServers.other, 'other MCP servers preserved');
@@ -212,7 +214,7 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it('host secures its endpoint (token file 0600, socket 0600)', () => {
+  it('host secures its endpoint (token file 0600, socket 0600)', { skip: !IS_POSIX && 'POSIX modes; Windows relies on the profile ACL' }, () => {
     assert.equal(statSync(tokenPath(dir)).mode & 0o777, 0o600);
     assert.equal(statSync(socketPath(dir)).mode & 0o777, 0o600);
     assert.equal(statSync(dir).mode & 0o777, 0o700);
