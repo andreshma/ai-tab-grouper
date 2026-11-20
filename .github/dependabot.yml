@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Dev dependencies only: the extension and the bridge have zero runtime
+  # dependencies. A maintainer re-runs `npm run prepublish:cws` before merging.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      dev-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
