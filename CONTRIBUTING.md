@@ -52,7 +52,7 @@ npm run test:coverage     # gates: lines 85 · branches 75 · functions 85
 npm run prepublish:cws    # lint → coverage → audit → package → CWS policy gate
 ```
 
-Node.js 20 or newer. The unit and integration suites need no browser: they run
+(`make check` runs the same full gate.) Node.js 20 or newer. The unit and integration suites need no browser: they run
 against a fake of the Chrome APIs (`test/helpers/chrome-fake.js`) and against
 real MCP and native-host processes. See [docs/TESTING.md](docs/TESTING.md).
 
