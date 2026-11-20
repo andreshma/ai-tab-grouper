@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an idea or a new capability
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reminder: AI Tab Grouper sends only tab titles, hosts and (optionally)
+        redacted paths, and only with the user's consent. Proposals that send
+        page content, query strings or cookies anywhere are out of scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to do that's hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [grouping quality, providers (Claude / Gemini Nano / heuristic), popup / options UI, Claude Desktop bridge, enterprise policy, privacy / consent, packaging / distribution, docs, other]

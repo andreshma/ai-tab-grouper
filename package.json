@@ -2,6 +2,8 @@
   "name": "ai-tab-grouper",
   "version": "1.4.1",
   "private": true,
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/andreshma/ai-tab-grouper.git" },
   "description": "Chrome MV3 extension that groups tabs by topic using Claude, Gemini Nano or a domain heuristic.",
   "type": "module",
   "engines": { "node": ">=20" },

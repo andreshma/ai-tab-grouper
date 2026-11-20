@@ -1,0 +1,49 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! For **security vulnerabilities**, do not use this
+        form — report privately via the Security tab (see SECURITY.md). Do not
+        paste tab titles, URLs, API keys or the bridge token.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options: [grouping (Claude API), grouping (Gemini Nano), grouping (domain heuristic), popup, options page, Claude Desktop bridge (MCP / native host), installer / doctor, enterprise policy, packaging / Chrome Web Store, docs, other]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "AI Tab Grouper 1.4.1, Chrome 142, Windows 11, Node 22, Claude Desktop version (if the bridge is involved)"
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Status shown by the extension
+      description: The lines shown in the popup and, for the bridge, the state shown in the options page (including the text in parentheses).
+      render: shell
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `node bridge/doctor.mjs` (bridge problems only)
+      description: The doctor never prints tab titles or URLs.
+      render: shell
+  - type: textarea
+    id: logs
+    attributes:
+      label: Service worker console output
+      description: "chrome://extensions → AI Tab Grouper → Service worker → Inspect. Remove anything private."
+      render: shell
