@@ -8,10 +8,11 @@
  *
  * Usage: node scripts/cws-check.mjs [path/to/package.zip]
  */
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { listZipEntries } from './zip-list.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const zipPath = process.argv[2];
@@ -137,7 +138,7 @@ check(/Chrome Web Store User Data Policy, including the Limited Use requirements
 
 // ---- Package ----
 if (zipPath) {
-  const listing = execFileSync('unzip', ['-Z1', zipPath], { encoding: 'utf8' }).split('\n').filter(Boolean);
+  const listing = listZipEntries(readFileSync(zipPath));
   check(listing.includes('manifest.json'), 'zip: manifest.json at root');
   const junk = listing.filter((f) => /^(test|docs|scripts|bridge|node_modules|\.github)\/|\.map$|package(-lock)?\.json$|\.md$/.test(f));
   check(junk.length === 0, 'zip: no dev/test files', junk.slice(0, 5).join(', '));

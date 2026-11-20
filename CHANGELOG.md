@@ -16,6 +16,8 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) · Versiona
 
 ### Fixed
 - Instalador del puente: con `AI_TAB_GROUPER_HOME` definido (instalación aislada, usada por los tests) ya no escribe ni borra la clave `HKCU\…\NativeMessagingHosts` en Windows. Ejecutar `npm test` en Windows reemplazaba el registro real por un manifest temporal con un ID de prueba y dejaba el popup en "Claude Desktop: reconectando…". `doctor` aplica la misma regla.
+- `npm run cws:check` ya no depende del binario `unzip` (ausente en Windows): lee el directorio central del zip con Node, sin dependencias.
+- Tests del puente portables a Windows (separador de rutas y permisos POSIX).
 
 ## [1.4.0] - 2026-11-19
 
