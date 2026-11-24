@@ -19,6 +19,16 @@ Every finding records how it was established:
 > A self-run red team is not a substitute for an independent audit. Treat this
 > as a list of known weak spots, not a certificate.
 
+## Contents
+
+- [Attacker model](#attacker-model)
+- [What was not verified](#what-was-not-verified)
+- [Scenarios](#scenarios)
+- [Findings](#findings)
+- [Remediation status](#remediation-status)
+- [What held](#what-held)
+- [Suggested order](#suggested-order)
+
 ## Attacker model
 
 - **A hostile web page.** It controls its own tab title and URL, and through
