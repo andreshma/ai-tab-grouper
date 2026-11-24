@@ -17,7 +17,7 @@ import { LineDecoder } from './protocol.js';
 /** Raised when Chrome/extension side is not reachable. Message is user-facing. */
 export class BridgeUnavailableError extends Error {
   constructor(detail = '') {
-    super('Chrome no está abierto o el puente con Claude Desktop no está activado en la extensión AI Tab Grouper'
+    super('Chrome is not open or the Claude Desktop bridge is not enabled in the AI Tab Grouper extension'
       + (detail ? ` (${detail})` : ''));
     this.name = 'BridgeUnavailableError';
   }
@@ -88,16 +88,16 @@ export function ipcRequest({ dir = bridgeDir(), method, params = {}, timeoutMs =
   try {
     token = readFileSync(tokenPath(dir), 'utf8').trim();
   } catch {
-    return Promise.reject(new BridgeUnavailableError('sin sesión activa'));
+    return Promise.reject(new BridgeUnavailableError('no active session'));
   }
 
   return new Promise((resolve, reject) => {
     const socket = net.createConnection(socketPath(dir));
     const done = (fn, value) => { clearTimeout(timer); socket.destroy(); fn(value); };
-    const timer = setTimeout(() => done(reject, new Error('Timeout esperando respuesta de Chrome')), timeoutMs);
+    const timer = setTimeout(() => done(reject, new Error('Timed out waiting for a response from Chrome')), timeoutMs);
 
     const decoder = new LineDecoder((msg) => {
-      if (msg?.error) done(reject, new Error(msg.error.message ?? 'Error del puente'));
+      if (msg?.error) done(reject, new Error(msg.error.message ?? 'Bridge error'));
       else done(resolve, msg?.result);
     });
     socket.on('connect', () => socket.write(`${JSON.stringify({ id: 1, token, method, params })}\n`));
@@ -108,6 +108,6 @@ export function ipcRequest({ dir = bridgeDir(), method, params = {}, timeoutMs =
       const code = /** @type {any} */ (err).code;
       done(reject, ['ENOENT', 'ECONNREFUSED', 'EPIPE'].includes(code) ? new BridgeUnavailableError(code) : err);
     });
-    socket.on('close', () => done(reject, new BridgeUnavailableError('conexión cerrada')));
+    socket.on('close', () => done(reject, new BridgeUnavailableError('connection closed')));
   });
 }

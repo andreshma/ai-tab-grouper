@@ -13,7 +13,7 @@
     "test:coverage": "c8 --check-coverage --lines 85 --branches 75 --functions 85 --include \"src/lib/**\" --include src/background.js --include \"bridge/src/**\" --include bridge/install.mjs --reporter text --reporter lcov node --test \"test/**/*.test.js\" \"bridge/test/**/*.test.js\"",
     "audit:deps": "npm audit --audit-level=high",
     "sbom": "npm sbom --sbom-format cyclonedx > dist/sbom.cdx.json",
-    "package": "web-ext build --source-dir . --artifacts-dir dist --filename ai-tab-grouper-{version}.zip --overwrite-dest --ignore-files CLAUDE.md .claude \".claude/**\" .gitignore bridge \"bridge/**\" test \"test/**\" docs \"docs/**\" scripts \"scripts/**\" coverage \"coverage/**\" .github \".github/**\" dist \"*.md\" \"package*.json\" \"eslint.config.js\" Makefile",
+    "package": "web-ext build --source-dir . --artifacts-dir dist --filename ai-tab-grouper-{version}.zip --overwrite-dest --ignore-files CLAUDE.md CITATION.cff .claude \".claude/**\" .gitignore bridge \"bridge/**\" test \"test/**\" docs \"docs/**\" scripts \"scripts/**\" coverage \"coverage/**\" .github \".github/**\" dist \"*.md\" \"package*.json\" \"eslint.config.js\" Makefile",
     "cws:check": "node scripts/cws-check.mjs dist/ai-tab-grouper-1.4.2.zip",
     "deploy:local": "node scripts/deploy-local.mjs",
     "prepublish:cws": "npm run lint && npm run test:coverage && npm run audit:deps && npm run package && npm run cws:check"

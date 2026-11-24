@@ -19,7 +19,7 @@ Claude Desktop never hands credentials to this code: the reasoning happens in yo
 
 ## Installation (once)
 
-1. Extension → **Configuración** (Settings) → *Claude Desktop* section → copy the **extension ID**.
+1. Extension → **Settings** → *Claude Desktop* section → copy the **extension ID**.
 2. In this folder:
    ```bash
    node install.mjs --extension-id <ID> --configure-claude
@@ -28,7 +28,7 @@ Claude Desktop never hands credentials to this code: the reasoning happens in yo
    - Registers the native host (Windows: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.aitabgrouper.bridge`; macOS/Linux: JSON in `NativeMessagingHosts/`).
    - Adds `ai-tab-grouper` to `mcpServers` in `claude_desktop_config.json` (with a backup; your other servers are kept).
 3. Restart Claude Desktop.
-4. Extension → Configuración → accept the **data notice** ("aviso de datos") → enable **"Activar puente con Claude Desktop"** (Enable bridge with Claude Desktop; Chrome will ask for the "communicate with native applications" permission) → **"Guardar"** (Save). Status: *"Conectado"* (Connected).
+4. Extension → Settings → accept the **data notice** → enable **"Enable Claude Desktop bridge"** (Chrome will ask for the "communicate with native applications" permission) → **"Save"**. Status: *"Connected to the local host"*.
 
 Verify with `node doctor.mjs` (all PASS). Do not move the folder after installing (or run the installer again). Uninstall: `node install.mjs --uninstall --configure-claude`.
 
@@ -66,9 +66,9 @@ To run it on a recurring basis, create a scheduled task in Claude Desktop/Cowork
 
 | Symptom | Action |
 |---|---|
-| Extension: "Host no instalado" (Host not installed) | Run the installer with the correct ID; restart Chrome |
-| Claude: "Chrome no está abierto o el puente…" (Chrome is not open or the bridge...) | Open Chrome; check that the bridge is enabled and *"Conectado"* |
-| Claude: "aviso de datos" (data notice) | Accept the notice in the extension's Configuración page |
+| Extension: "Host not installed" | Run the installer with the correct ID; restart Chrome |
+| Claude: "Chrome is not open or the Claude Desktop bridge is not enabled…" | Open Chrome; check that the bridge is enabled and its status is *"Connected to the local host"* |
+| Claude: "The user has not accepted the data notice…" | Accept the notice in the extension's Settings page |
 | Claude does not see the tools | Check `claude_desktop_config.json` and restart Claude Desktop |
 | Host logs | Chrome's stderr (`chrome --enable-logging=stderr`) · Claude Desktop MCP logs |
 

@@ -74,18 +74,18 @@ export async function runDoctor({ browser = 'chrome', env = process.env, platfor
   const manifestFile = resolveManifestFile(target);
   let extensionId = '';
   if (!manifestFile || !existsSync(manifestFile)) {
-    add('FAIL', `Host nativo registrado (${browser})`, `No encontrado (${target.registryKey ?? target.file}). Ejecuta: node install.mjs --extension-id <ID> --configure-claude`);
+    add('FAIL', `Native host registered (${browser})`, `Not found (${target.registryKey ?? target.file}). Run: node install.mjs --extension-id <ID> --configure-claude`);
   } else {
     const m = JSON.parse(readFileSync(manifestFile, 'utf8'));
     extensionId = String(m.allowed_origins?.[0] ?? '').replace(/^chrome-extension:\/\/|\/$/g, '');
     const okShape = m.name === HOST_NAME && m.type === 'stdio' && isExtensionId(extensionId);
-    add(okShape ? 'PASS' : 'FAIL', 'Manifest del host válido', okShape ? `ID permitido: ${extensionId}` : manifestFile);
+    add(okShape ? 'PASS' : 'FAIL', 'Host manifest valid', okShape ? `Allowed ID: ${extensionId}` : manifestFile);
     const launcherOk = existsSync(m.path);
-    add(launcherOk ? 'PASS' : 'FAIL', 'Launcher existe', m.path);
+    add(launcherOk ? 'PASS' : 'FAIL', 'Launcher exists', m.path);
     if (launcherOk) {
       const paths = [...readFileSync(m.path, 'utf8').matchAll(/"([^"]+)"/g)].map((x) => x[1]).filter((p) => !p.startsWith('$'));
       const missing = paths.filter((p) => !existsSync(p));
-      add(missing.length ? 'FAIL' : 'PASS', 'Launcher apunta a node y host.js existentes', missing.length ? `Faltan: ${missing.join(', ')} → reinstala` : '');
+      add(missing.length ? 'FAIL' : 'PASS', 'Launcher points to an existing node and host.js', missing.length ? `Missing: ${missing.join(', ')} → reinstall` : '');
     }
   }
 
@@ -96,38 +96,38 @@ export async function runDoctor({ browser = 'chrome', env = process.env, platfor
     entry = JSON.parse(readFileSync(cfgPath, 'utf8')).mcpServers?.[MCP_SERVER_KEY];
   } catch { /* handled below */ }
   if (!entry) {
-    add('FAIL', 'Claude Desktop configurado', `Sin "${MCP_SERVER_KEY}" en ${cfgPath}. Usa --configure-claude o Claude Desktop → Settings → Developer → Edit Config`);
+    add('FAIL', 'Claude Desktop configured', `No "${MCP_SERVER_KEY}" in ${cfgPath}. Use --configure-claude or Claude Desktop → Settings → Developer → Edit Config`);
   } else {
-    add('PASS', 'Claude Desktop configurado', cfgPath);
+    add('PASS', 'Claude Desktop configured', cfgPath);
     try {
       const tools = await mcpSmoke(entry.command, entry.args ?? []);
       const expected = ['list_tabs', 'apply_tab_groups', 'ungroup_tabs'];
       const ok = expected.every((t) => tools.includes(t));
-      add(ok ? 'PASS' : 'FAIL', 'Servidor MCP arranca y expone tools', tools.join(', '));
+      add(ok ? 'PASS' : 'FAIL', 'MCP server starts and exposes tools', tools.join(', '));
     } catch (e) {
-      add('FAIL', 'Servidor MCP arranca y expone tools', /** @type {Error} */ (e).message);
+      add('FAIL', 'MCP server starts and exposes tools', /** @type {Error} */ (e).message);
     }
   }
 
   // 4. Runtime: Chrome ⇄ host ⇄ extension
   const dir = bridgeDir(env);
   if (!existsSync(tokenPath(dir))) {
-    add('WARN', 'Chrome conectado al host', 'Host no activo: abre Chrome, acepta el aviso de datos y activa "Puente con Claude Desktop" en la extensión');
+    add('WARN', 'Chrome connected to the host', 'Host not running: open Chrome, accept the data notice and turn on "Enable Claude Desktop bridge" in the extension');
   } else {
     try {
       const pong = await ipcRequest({ dir, method: 'ping', timeoutMs: 5000 });
-      add('PASS', 'Extensión responde (ping)', `v${pong?.version}`);
+      add('PASS', 'Extension responds (ping)', `v${pong?.version}`);
       try {
         const res = await ipcRequest({ dir, method: 'list_tabs', params: { scope: 'all', onlyUngrouped: false }, timeoutMs: 8000 });
         const tabs = (res?.windows ?? []).flatMap((w) => w.tabs ?? []);
         const loose = tabs.filter((t) => t.group === null).length;
-        add('PASS', 'list_tabs end-to-end', `${tabs.length} pestañas agrupables (${loose} sin grupo) en ${(res?.windows ?? []).length} ventana(s); `
-          + `${res?.notGroupable ?? '?'} no agrupables (fijadas/chrome://), ${res?.excludedByPolicy ?? 0} excluidas`);
+        add('PASS', 'list_tabs end-to-end', `${tabs.length} groupable tabs (${loose} ungrouped) in ${(res?.windows ?? []).length} window(s); `
+          + `${res?.notGroupable ?? '?'} not groupable (pinned/chrome://), ${res?.excludedByPolicy ?? 0} excluded`);
       } catch (e) {
         add('FAIL', 'list_tabs end-to-end', /** @type {Error} */ (e).message);
       }
     } catch (e) {
-      add('FAIL', 'Extensión responde (ping)', /** @type {Error} */ (e).message);
+      add('FAIL', 'Extension responds (ping)', /** @type {Error} */ (e).message);
     }
   }
   return results;
@@ -139,7 +139,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const icon = { PASS: '✔', WARN: '!', FAIL: '✘' };
   for (const r of results) console.log(`${icon[r.level]} ${r.level.padEnd(4)} ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);
   const fails = results.filter((r) => r.level === 'FAIL').length;
-  console.log(fails ? `\n${fails} fallo(s). Corrige en orden y vuelve a ejecutar.` : '\nTodo listo. En Claude Desktop: "Organiza mis pestañas de Chrome por tema".');
+  console.log(fails ? `\n${fails} failure(s). Fix them in order and run again.` : '\nAll set. In Claude Desktop: "Organize my Chrome tabs by topic".');
   process.exitCode = fails ? 1 : 0;
 }
 

@@ -44,7 +44,7 @@ export function hostManifestTarget(browser, platform, home, { sandboxed = false 
     edge: { reg: 'Microsoft\\Edge', mac: 'Microsoft Edge', linux: 'microsoft-edge' },
     chromium: { reg: 'Chromium', mac: 'Chromium', linux: 'chromium' },
   }[browser];
-  if (!vendor) throw new Error(`Navegador no soportado: ${browser}`);
+  if (!vendor) throw new Error(`Unsupported browser: ${browser}`);
   if (platform === 'win32' && !sandboxed) return { registryKey: `HKCU\\Software\\${vendor.reg}\\NativeMessagingHosts\\${HOST_NAME}` };
   if (platform === 'darwin') return { file: join(home, 'Library', 'Application Support', vendor.mac, 'NativeMessagingHosts', `${HOST_NAME}.json`) };
   return { file: join(home, '.config', vendor.linux, 'NativeMessagingHosts', `${HOST_NAME}.json`) };
@@ -70,7 +70,7 @@ export function claudeConfigPath(platform, env) {
 export function buildHostManifest(launcherPath, extensionId) {
   return {
     name: HOST_NAME,
-    description: 'AI Tab Grouper — puente local con Claude Desktop',
+    description: 'AI Tab Grouper — local bridge to Claude Desktop',
     path: launcherPath,
     type: 'stdio',
     allowed_origins: [`chrome-extension://${extensionId}/`],
@@ -128,7 +128,7 @@ function parseArgs(argv) {
     else if (a === '--browser') opts.browser = argv[++i];
     else if (a === '--configure-claude') opts.configureClaude = true;
     else if (a === '--uninstall') opts.uninstall = true;
-    else throw new Error(`Argumento desconocido: ${a}`);
+    else throw new Error(`Unknown argument: ${a}`);
   }
   return opts;
 }
@@ -147,12 +147,12 @@ function main() {
     rmSync(manifestFile, { force: true });
     rmSync(launcher, { force: true });
     if (opts.configureClaude) updateClaudeConfig(claudeConfigPath(platform, env), null);
-    console.log('Puente desinstalado.');
+    console.log('Bridge uninstalled.');
     return;
   }
 
   if (!isExtensionId(opts.extensionId)) {
-    throw new Error('--extension-id inválido. Cópialo de Configuración de la extensión o de chrome://extensions (32 letras a-p).');
+    throw new Error('Invalid --extension-id. Copy it from the extension\'s Settings page or from chrome://extensions (32 letters a-p).');
   }
 
   ensurePrivateDir(stateDir);
@@ -165,19 +165,19 @@ function main() {
   if (target.registryKey) {
     execFileSync('reg', ['add', target.registryKey, '/ve', '/t', 'REG_SZ', '/d', manifestFile, '/f'], { stdio: 'ignore' });
   }
-  console.log(`✓ Host nativo registrado (${opts.browser}): ${target.registryKey ?? manifestFile}`);
+  console.log(`✓ Native host registered (${opts.browser}): ${target.registryKey ?? manifestFile}`);
 
   const mcpEntry = { command: process.execPath, args: [resolve(HERE, 'src', 'mcp-server.js')] };
   if (opts.configureClaude) {
     const cfg = claudeConfigPath(platform, env);
     const backup = updateClaudeConfig(cfg, mcpEntry);
-    console.log(`✓ Claude Desktop configurado: ${cfg}${backup ? ` (backup: ${backup})` : ''}`);
-    console.log('  Reinicia Claude Desktop para cargar el servidor MCP.');
+    console.log(`✓ Claude Desktop configured: ${cfg}${backup ? ` (backup: ${backup})` : ''}`);
+    console.log('  Restart Claude Desktop to load the MCP server.');
   } else {
-    console.log('\nAñade esto a claude_desktop_config.json → "mcpServers":');
+    console.log('\nAdd this to claude_desktop_config.json → "mcpServers":');
     console.log(JSON.stringify({ [MCP_SERVER_KEY]: mcpEntry }, null, 2));
   }
-  console.log('\nSiguiente: en la extensión → Configuración → activa "Puente con Claude Desktop".');
+  console.log('\nNext: in the extension → Settings → turn on "Enable Claude Desktop bridge".');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

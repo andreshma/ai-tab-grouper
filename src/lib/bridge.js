@@ -5,6 +5,7 @@
  * Reconnects with exponential backoff; stops retrying when the host is not
  * installed (needs user action, not retries).
  */
+import { t } from './i18n.js';
 
 export const NATIVE_HOST = 'com.aitabgrouper.bridge';
 const MAX_BACKOFF_MS = 60_000;
@@ -46,7 +47,7 @@ export function createBridge({
   const onMessage = async (msg) => {
     const handler = Object.hasOwn(handlers, msg?.method) ? handlers[msg.method] : null;
     try {
-      if (!handler) throw new Error(`Método no soportado: ${msg?.method}`);
+      if (!handler) throw new Error(t('err_unsupportedMethod', String(msg?.method)));
       const result = await handler(msg.params ?? {});
       port?.postMessage({ id: msg.id, result });
     } catch (err) {
@@ -67,7 +68,7 @@ export function createBridge({
     port.onMessage.addListener(onMessage);
     port.onDisconnect.addListener(() => {
       port = null;
-      retry(lastError() ?? 'Host desconectado');
+      retry(lastError() ?? t('err_hostDisconnected'));
     });
   };
 

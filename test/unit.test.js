@@ -4,8 +4,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { createI18nFake } from './helpers/chrome-fake.js';
 import { createBridge } from '../src/lib/bridge.js';
-import { buildCatchAll, catchAllName } from '../src/lib/catchall.js';
+import { buildCatchAll, catchAllName, isCatchAllTitle } from '../src/lib/catchall.js';
 import { describeStatus } from '../src/popup/status.js';
 import { classifyTabs } from '../src/lib/classifier.js';
 import {
@@ -13,12 +14,16 @@ import {
 } from '../src/lib/config.js';
 import { groupByDomain, labelForHost, registrableDomain } from '../src/lib/heuristic.js';
 import { isAutoCandidate, isFreshCandidate } from '../src/lib/ledger.js';
-import { buildUserMessage } from '../src/lib/prompt.js';
+import { buildSystemPrompt, buildUserMessage } from '../src/lib/prompt.js';
 import { classifyWithNano, nanoAvailability } from '../src/lib/providers/nano.js';
 import { buildClaudeRequest, buildHeaders, classifyWithClaude, extractToolInput } from '../src/lib/providers/claude.js';
 import { groupsWithExcludedTabs, isUrlLikeTitle, isHostExcluded, redactText, toTabDescriptor } from '../src/lib/redact.js';
 import { CircuitBreaker, HttpError, parseRetryAfter, withRetry } from '../src/lib/resilience.js';
 import { colorForName, normalizeResult, sanitizeGroupName, TAB_GROUP_COLORS } from '../src/lib/validate.js';
+
+// Only `chrome.i18n` exists here (English UI unless a test switches it): these modules use no other Chrome API.
+const i18n = createI18nFake('en-US');
+globalThis.chrome = /** @type {any} */ ({ i18n });
 
 const memStore = () => {
   const m = new Map();
@@ -379,6 +384,47 @@ describe('catch-all', () => {
     assert.equal(buildCatchAll([3], ['varios'], 'es').existing, true);
     assert.equal(catchAllName('en'), 'Misc');
   });
+
+  it('names the group after the language setting; "auto" follows the browser UI language', () => {
+    assert.equal(catchAllName('es'), 'Varios');
+    assert.equal(catchAllName('auto'), 'Misc');
+    i18n.setUILanguage('es-419');
+    try {
+      assert.equal(catchAllName('auto'), 'Varios');
+      assert.equal(catchAllName('en'), 'Misc', 'an explicit setting beats the UI language');
+    } finally {
+      i18n.setUILanguage('en-US');
+    }
+    assert.equal(catchAllName('fr'), 'Misc', 'unsupported value → UI language → default locale');
+  });
+
+  it('recognises a catch-all group created under another language (no duplicate after a language switch)', () => {
+    for (const [language, existingTitle] of [['en', 'Varios'], ['es', 'Misc'], ['auto', 'VARIOS'], ['es', 'misc']]) {
+      const a = buildCatchAll([7], ['Work', existingTitle], language);
+      assert.deepEqual({ name: a.name, existing: a.existing }, { name: existingTitle, existing: true }, `${language} reuses "${existingTitle}"`);
+    }
+    assert.ok(isCatchAllTitle('Varios') && isCatchAllTitle('misc') && !isCatchAllTitle('Miscellaneous') && !isCatchAllTitle(''));
+  });
+
+  it('is deterministic when both titles exist: current language first, then window order', () => {
+    assert.equal(buildCatchAll([7], ['Varios', 'Misc'], 'en').name, 'Misc');
+    assert.equal(buildCatchAll([7], ['Misc', 'Varios'], 'es').name, 'Varios');
+  });
+});
+
+describe('prompt language', () => {
+  it('instructs in English and asks for group names in the resolved language', () => {
+    assert.match(buildSystemPrompt('es'), /written in Spanish/);
+    assert.match(buildSystemPrompt('en'), /written in English/);
+    assert.match(buildSystemPrompt('auto'), /written in English/);
+    i18n.setUILanguage('es');
+    try {
+      assert.match(buildSystemPrompt('auto'), /written in Spanish/);
+      assert.match(buildSystemPrompt('auto'), /^You organize browser tabs/, 'instructions stay in English');
+    } finally {
+      i18n.setUILanguage('en-US');
+    }
+  });
 });
 
 describe('popup status messages', () => {
@@ -388,34 +434,59 @@ describe('popup status messages', () => {
 
   it('reports "no provider" honestly instead of promising the heuristic (regression)', () => {
     const t = texts({ ...base, providers: ['claude', 'nano'], lastRun: { provider: 'none', candidates: 24, at: now } });
-    assert.ok(t.some((x) => x.startsWith('err:No se agrupó') && x.includes('24')));
-    assert.ok(t.some((x) => x.startsWith('err:') && x.includes('Fallback por dominio')));
-    assert.ok(!t.some((x) => x.includes('se usará heurística')));
+    assert.ok(t.some((x) => x.startsWith('err:Not grouped') && x.includes('24')));
+    assert.ok(t.some((x) => x.startsWith('err:') && x.includes('Domain fallback')));
+    assert.ok(!t.some((x) => x.includes('heuristic will be used')));
   });
 
   it('heuristic-only mode points to Claude Desktop when the bridge is up', () => {
     const t = texts({ ...base, lastRun: { provider: 'heuristic', grouped: 4, groups: 2, at: now - 5000, errors: [] } });
-    assert.ok(t[0].includes('Heurística por dominio · 4 pestañas en 2 grupos · hace 5s'));
-    assert.ok(t.some((x) => x.includes('pídeselo a Claude Desktop')));
-    assert.ok(t.includes('ok:Claude Desktop: conectado'));
+    assert.ok(t[0].includes('Domain heuristic · 4 tabs in 2 groups · 5s ago'));
+    assert.ok(t.some((x) => x.endsWith('(no API key or Gemini Nano). To group by topic, ask Claude Desktop.')));
+    assert.ok(t.includes('ok:Claude Desktop: connected'));
   });
 
   it('no warning when a real AI provider is usable', () => {
     const t = texts({ ...base, nano: 'available' });
-    assert.ok(!t.some((x) => x.startsWith('err:') || x.includes('por dominio')));
+    assert.ok(!t.some((x) => x.startsWith('err:') || x.includes('by domain')));
   });
 
-  it('version skew (old SW, new popup) is reported, not "sin motor" (regression)', () => {
+  it('version skew (old SW, new popup) is reported, not "no engine" (regression)', () => {
     const oldSw = { ...base };
     delete oldSw.providers;
     const t = texts({ ...oldSw, lastRun: { provider: 'heuristic', grouped: 5, groups: 2, at: now, errors: [] } });
-    assert.ok(t.some((x) => x.includes('pulsa ↻')));
-    assert.ok(!t.some((x) => x.includes('sin motor')));
+    assert.ok(t.some((x) => x.includes('press ↻')));
+    assert.ok(!t.some((x) => x.includes('no engine')));
   });
 
   it('nothing-to-group and SW errors', () => {
-    assert.ok(texts({ ...base, lastRun: { provider: '-', at: now } })[0].includes('Nada que agrupar'));
+    assert.ok(texts({ ...base, lastRun: { provider: '-', at: now } })[0].includes('Nothing to group'));
     assert.equal(describeStatus(undefined)[0].cls, 'err');
+    assert.equal(describeStatus(undefined)[0].text, 'No response from the service worker');
+  });
+
+  it('shows real failures as a fallback line and hides plain "unavailable" skips', () => {
+    const run = (errors) => texts({ ...base, nano: 'available', lastRun: { provider: 'heuristic', grouped: 2, groups: 1, at: now - 7_200_000, errors } });
+    assert.ok(run([{ provider: 'nano', code: 'unavailable', message: 'unavailable' }]).every((x) => !x.includes('Fallback')));
+    assert.ok(run([{ provider: 'claude', code: 'breaker-open', message: 'circuit breaker open' }]).includes('warn:Fallback: claude → circuit breaker open'));
+    const t = run([{ provider: 'claude', message: 'Claude API 500: boom' }]);
+    assert.ok(t.includes('warn:Fallback: claude → Claude API 500: boom'));
+    assert.ok(t[0].endsWith('2 h ago'));
+  });
+
+  it('Spanish UI keeps the original Spanish wording', () => {
+    i18n.setUILanguage('es-MX');
+    try {
+      const t = texts({ ...base, lastRun: { provider: 'heuristic', grouped: 4, groups: 2, at: now - 5000, errors: [{ provider: 'claude', code: 'breaker-open', message: 'circuit breaker open' }] } });
+      assert.equal(t[0], ':Heurística por dominio · 4 pestañas en 2 grupos · hace 5s');
+      assert.ok(t.includes('warn:Fallback: claude → circuit breaker abierto'));
+      assert.ok(t.includes('ok:Claude Desktop: conectado'));
+      assert.ok(t.includes('muted:Agrupado en Chrome: por dominio (sin API key ni Gemini Nano). Para agrupar por tema, pídeselo a Claude Desktop.'));
+      assert.ok(texts({ ...base, providers: ['claude', 'nano'], lastRun: { provider: 'none', candidates: 24, at: now - 120_000 } })
+        .includes('err:No se agrupó: ningún proveedor disponible para 24 pestañas · hace 2 min'));
+    } finally {
+      i18n.setUILanguage('en-US');
+    }
   });
 });
 
@@ -441,7 +512,7 @@ describe('bridge link', () => {
     await port.fire({ id: 2, method: 'boom' });
     await port.fire({ id: 3, method: 'constructor' });
     assert.deepEqual(port.posted, [
-      { id: 1, result: 'pong' }, { id: 2, error: { message: 'x' } }, { id: 3, error: { message: 'Método no soportado: constructor' } },
+      { id: 1, result: 'pong' }, { id: 2, error: { message: 'x' } }, { id: 3, error: { message: 'Unsupported method: constructor' } },
     ]);
   });
 

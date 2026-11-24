@@ -4,6 +4,7 @@
  * Structured output is enforced with a forced tool call (`tool_choice`), so the
  * response is schema-shaped JSON instead of free text that must be parsed.
  */
+import { t } from '../i18n.js';
 import { buildSystemPrompt, buildUserMessage, GROUPING_SCHEMA } from '../prompt.js';
 import { HttpError, parseRetryAfter, withRetry } from '../resilience.js';
 
@@ -18,7 +19,7 @@ const TOOL_NAME = 'assign_tab_groups';
 /**
  * Builds the Messages API request body.
  * @param {ClassifyInput} input
- * @param {{model: string, language: 'es'|'en'}} opts
+ * @param {{model: string, language: 'auto'|'en'|'es'}} opts
  */
 export function buildClaudeRequest(input, { model, language }) {
   return {
@@ -43,7 +44,7 @@ export function buildClaudeRequest(input, { model, language }) {
  */
 export function extractToolInput(response) {
   const block = response?.content?.find?.((b) => b?.type === 'tool_use' && b?.name === TOOL_NAME);
-  if (!block) throw new Error(`Respuesta de Claude sin tool_use (stop_reason=${response?.stop_reason ?? 'n/a'})`);
+  if (!block) throw new Error(t('err_claudeNoToolUse', response?.stop_reason ?? 'n/a'));
   return block.input;
 }
 
@@ -67,7 +68,7 @@ export function buildHeaders(apiKey, viaProxy) {
 /**
  * Classifies tabs with Claude, retrying transient failures with backoff.
  * @param {ClassifyInput} input
- * @param {{apiKey: string, endpoint?: string, model: string, language: 'es'|'en', fetchImpl?: typeof fetch,
+ * @param {{apiKey: string, endpoint?: string, model: string, language: 'auto'|'en'|'es', fetchImpl?: typeof fetch,
  *          timeoutMs?: number, retries?: number, sleep?: (ms:number)=>Promise<void>}} opts
  *   endpoint: corporate proxy URL (Messages API compatible). Omit for direct BYOK calls.
  * @returns {Promise<unknown>} Raw `{groups:[...]}` (validate with `normalizeResult`).

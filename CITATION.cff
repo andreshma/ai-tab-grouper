@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: >-
+  If you use AI Tab Grouper in your work, please cite it using the metadata
+  below.
+type: software
+title: "AI Tab Grouper: a Chrome extension that groups tabs by topic"
+abstract: >-
+  AI Tab Grouper is a Manifest V3 Chrome extension that groups tabs by topic
+  or task with a chain of three engines that falls back on its own: the Claude
+  API with the user's own key (or a proxy set by managed policy), Gemini Nano
+  on-device, and an offline domain heuristic. Tab data is reduced to title,
+  host and an optional redacted path before it leaves the device, model output
+  is validated before it touches a tab, and an optional local MCP bridge lets
+  Claude Desktop list and group the tabs.
+authors:
+  - family-names: Hernández
+    given-names: Andrés
+    alias: andreshma
+version: 1.4.2
+date-released: "2026-11-20"
+license: Apache-2.0
+repository-code: "https://github.com/andreshma/ai-tab-grouper"
+url: "https://github.com/andreshma/ai-tab-grouper"
+keywords:
+  - chrome-extension
+  - manifest-v3
+  - tab-groups
+  - llm
+  - data-minimization
+  - mcp

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AI Tab Grouper",
+  "name": "__MSG_ext_name__",
   "version": "1.4.2",
-  "description": "Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual.",
+  "description": "__MSG_ext_description__",
+  "default_locale": "en",
   "minimum_chrome_version": "120",
   "permissions": ["tabs", "tabGroups", "storage"],
   "optional_permissions": ["nativeMessaging"],
@@ -15,7 +16,7 @@
     "managed_schema": "managed_schema.json"
   },
   "action": {
-    "default_title": "AI Tab Grouper",
+    "default_title": "__MSG_ext_name__",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -27,7 +28,7 @@
   "commands": {
     "group-now": {
       "suggested_key": { "default": "Alt+Shift+G" },
-      "description": "Agrupar pestañas sin grupo de la ventana actual"
+      "description": "__MSG_cmd_groupNow__"
     }
   },
   "icons": {

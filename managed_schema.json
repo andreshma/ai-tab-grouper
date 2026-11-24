@@ -2,52 +2,52 @@
   "type": "object",
   "properties": {
     "allowedProviders": {
-      "title": "Proveedores IA permitidos",
-      "description": "Subconjunto de: claude, nano, heuristic. Los no listados se desactivan y bloquean.",
+      "title": "Allowed AI providers",
+      "description": "Subset of: claude, nano, heuristic. Providers not listed are turned off and locked.",
       "type": "array",
       "items": { "type": "string" }
     },
     "excludedHosts": {
-      "title": "Dominios excluidos de IA remota",
-      "description": "Se suman a los del usuario. Incluye subdominios. Nunca se envían a un modelo remoto.",
+      "title": "Domains excluded from remote AI",
+      "description": "Added to the user's own list. Subdomains included. Never sent to a remote model.",
       "type": "array",
       "items": { "type": "string" }
     },
     "forbidPathSending": {
-      "title": "Prohibir envío de rutas de URL",
-      "description": "Si true, solo se envían título y dominio.",
+      "title": "Forbid sending URL paths",
+      "description": "If true, only the title and the domain are sent.",
       "type": "boolean"
     },
     "disableAutoGroup": {
-      "title": "Desactivar agrupación automática",
-      "description": "Si true, solo agrupación manual.",
+      "title": "Disable automatic grouping",
+      "description": "If true, grouping is manual only.",
       "type": "boolean"
     },
     "allowUserApiKey": {
-      "title": "Permitir API key personal (BYOK)",
-      "description": "Si false, el usuario no puede usar su propia key de Anthropic.",
+      "title": "Allow a personal API key (BYOK)",
+      "description": "If false, the user cannot use their own Anthropic key.",
       "type": "boolean"
     },
     "apiKeyStorage": {
-      "title": "Almacenamiento de la API key personal",
-      "description": "session = solo en memoria (se borra al cerrar Chrome); local = persistente.",
+      "title": "Storage of the personal API key",
+      "description": "session = memory only (cleared when Chrome closes); local = persistent.",
       "type": "string",
       "enum": ["session", "local"]
     },
     "allowedModels": {
-      "title": "Modelos permitidos",
-      "description": "Allowlist de model ids; el primero es el valor por defecto.",
+      "title": "Allowed models",
+      "description": "Allowlist of model ids; the first one is the default.",
       "type": "array",
       "items": { "type": "string" }
     },
     "allowDesktopBridge": {
-      "title": "Permitir puente con Claude Desktop",
-      "description": "Si false, la extensión no expone pestañas a Claude Desktop vía MCP.",
+      "title": "Allow the Claude Desktop bridge",
+      "description": "If false, the extension does not expose tabs to Claude Desktop through MCP.",
       "type": "boolean"
     },
     "proxyEndpoint": {
-      "title": "Endpoint del proxy corporativo",
-      "description": "URL HTTPS compatible con Messages API. La credencial vive en el vault del proxy; la extensión no envía API key.",
+      "title": "Corporate proxy endpoint",
+      "description": "HTTPS URL compatible with the Messages API. The credential lives in the proxy's vault; the extension sends no API key.",
       "type": "string"
     }
   }

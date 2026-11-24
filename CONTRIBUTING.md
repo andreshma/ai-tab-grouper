@@ -25,9 +25,13 @@ everything else is open to discussion.
    the options page opens as a tab.
 6. **Strict CSP.** No inline `<script>` or `<style>`, no `style=` attributes,
    no remote code, no `eval`, no `innerHTML`. Styles live in `.css` files.
-7. **"Varios" is deterministic.** The catch-all group ("Varios", Spanish for
-   "miscellaneous") applies to manual grouping and Claude Desktop, never to
-   automatic mode, where loose tabs must be able to pair up later.
+7. **The catch-all group is deterministic.** It applies to manual grouping and
+   Claude Desktop, never to automatic mode, where loose tabs must be able to
+   pair up later. Its title is fixed per group-name language
+   (`CATCH_ALL_NAMES` in `src/lib/catchall.js`: "Misc", "Varios") and a group
+   carrying *any* of those titles is recognized as the catch-all, so a
+   language change never creates a second one. Never rename or remove an
+   entry; a new language only adds one.
 8. **The bridge stays small.** Zero runtime dependencies; a method allowlist in
    both the native host and the extension; an ephemeral, user-only token;
    `allowed_origins` holds only this extension's id; stdout of the host and of
@@ -37,8 +41,28 @@ everything else is open to discussion.
 
 ## Language
 
-Code, comments, JSDoc, commit messages and documentation are in English. The
-user interface of the extension is in Spanish.
+Code, comments, JSDoc, commit messages and documentation are in English.
+
+The user interface is localized with `chrome.i18n`: English is the default
+locale and Spanish is the second one ([ADR-0004](docs/adr/0004-internationalization.md)).
+
+- Never hard-code user-visible text. Add a message to **every**
+  `_locales/<locale>/messages.json` and use it through `t('key')`
+  (`src/lib/i18n.js`) or, in HTML, through `data-i18n`, `data-i18n-title` or
+  `data-i18n-placeholder` (`src/ui/localize.js`).
+- Keys are `<area>_<name>` (`popup_groupNow`, `opt_save`, `err_noConsent`).
+  Use named placeholders (`$COUNT$`), never bare `$1`, and write a
+  `description` in the English catalogue.
+- `npm test` fails if a locale misses a key, a referenced key does not exist,
+  a message is unused or placeholders differ between locales.
+- Instructions to a model (the system prompt, the MCP tool descriptions) are
+  always in English; only the generated group names follow the user's language.
+- The bridge CLI (`install.mjs`, `doctor.mjs`) and the MCP server are
+  English-only.
+- To add a language: add `_locales/<code>/messages.json`, add the code to
+  `SUPPORTED_LANGUAGES` (`src/lib/i18n.js`), `LANGUAGE_NAMES`
+  (`src/lib/prompt.js`) and `CATCH_ALL_NAMES` (`src/lib/catchall.js`), and add
+  the option to the language select in the options page.
 
 ## Dev setup
 

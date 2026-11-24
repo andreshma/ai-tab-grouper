@@ -75,8 +75,10 @@ export async function withRetry(fn, {
 
 /**
  * Circuit breaker whose state survives MV3 service-worker restarts (via `store`).
- * Closed → Open after `failureThreshold` consecutive failures; after `cooldownMs`
- * one trial call is allowed (half-open). A failed trial re-opens it.
+ * Closed → Open after `failureThreshold` consecutive failures. Once `cooldownMs`
+ * has elapsed calls are let through again (there is no single-trial gate: every
+ * call passes until one of them fails). The failure count is kept, so the first
+ * failure after the cooldown re-opens the breaker; a success closes it.
  */
 export class CircuitBreaker {
   /**

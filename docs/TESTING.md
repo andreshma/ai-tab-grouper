@@ -19,7 +19,7 @@ npm run prepublish:cws    # lint → coverage → audit → package → CWS poli
 | Coverage | c8 (`src/lib`, `src/background.js`, `bridge/src`, `bridge/install.mjs`) | lines ≥ 85 · branches ≥ 75 · functions ≥ 85 |
 | Supply chain | `npm audit`, dependency review on pull requests | 0 high or critical · 0 runtime dependencies |
 | Static analysis | CodeQL (`security-and-quality`) | no alerts |
-| Chrome Web Store policy | `scripts/cws-check.mjs` | 28 checks: permissions, CSP, remote code, icons, zip contents, privacy policy |
+| Chrome Web Store policy | `scripts/cws-check.mjs` | 34 checks: locales, permissions, CSP, remote code, icons, zip contents, privacy policy |
 | SBOM | `npm sbom` (CycloneDX) | artifact |
 
 CI runs these in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and
@@ -28,12 +28,18 @@ CI runs these in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and
 ## What the suites cover
 
 - **`test/unit.test.js`** — redaction, validation of model output, heuristic,
-  prompt escaping, retry and circuit breaker, providers, policy, popup status.
+  prompt escaping and language, retry and circuit breaker, providers, policy,
+  popup status (English and Spanish), catch-all recognition across languages.
 - **`test/integration.test.js`** — the whole service worker against a fake of
   the Chrome APIs (`test/helpers/chrome-fake.js`): consent, sender validation,
   automatic and manual grouping, fallbacks, enterprise policy, the bridge
   handlers and the catch-all group.
-- **`test/zip-list.test.js`** — the zip reader used by the store policy gate.
+- **`test/i18n.test.js`** — the localization contract: the same keys in every
+  locale, every key referenced in the manifest, HTML and JS exists, no unused
+  message, consistent placeholders and inline markup, language resolution and
+  the page localizer.
+- **`test/zip-list.test.js`** — the zip reader used by the store policy gate,
+  and what the package script ships.
 - **`bridge/test/bridge.test.js`** — protocol framing, the MCP contract, the
   installer, an end-to-end run with real MCP and native-host processes, and
   the doctor.
@@ -54,7 +60,7 @@ The repository folder and the folder Chrome loads are different on purpose.
 3. If `bridge/src` changed, quit Claude Desktop completely, open it again and
    start a new chat. Sessions started earlier do not see new MCP tools.
 4. Run `node bridge/doctor.mjs` from the deployed folder: every line must be
-   `PASS`, and the popup must show "Claude Desktop: conectado" (connected).
+   `PASS`, and the popup must show "Claude Desktop: connected".
 
 The full manual plan for Windows is in
 [E2E_TEST_PLAN_WINDOWS.md](E2E_TEST_PLAN_WINDOWS.md).
@@ -67,13 +73,17 @@ These need a real browser:
    no errors.
 2. Without an API key: open two or more tabs of the same site and two of
    another. They are grouped by domain.
-3. Accept the data notice, add a key, "Probar conexión" (test connection)
+3. Accept the data notice, add a key, "Test connection"
    reports OK. Tabs about one topic on different sites form a topic group.
 4. Pull a tab out of a group: it is not regrouped on its own.
-5. Popup: "Agrupar ahora" (group now), "Reorganizar todo" (reorganize all),
-   "Desagrupar" (ungroup); the `Alt+Shift+G` shortcut.
+5. Popup: "Group now", "Reorganize all", "Ungroup"; the `Alt+Shift+G`
+   shortcut.
 6. With the key not remembered, restart Chrome: the key is gone.
 7. With a test policy (`chrome://policy`): locked fields and the "managed by
    your organization" banner.
 8. Gemini Nano, on supported hardware: status "available" and the provider
-   "Gemini Nano (local)" when on-device is preferred.
+   "Gemini Nano (on-device)" when on-device is preferred.
+9. With Chrome in Spanish (`chrome://settings/languages`, then restart): the
+   popup, the options page and the shortcut description are in Spanish, and
+   leftover tabs still join an existing "Misc" group instead of creating
+   "Varios".

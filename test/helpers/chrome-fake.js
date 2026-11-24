@@ -4,8 +4,52 @@
  * real APIs closely enough to exercise grouping, ledger, messaging and the
  * native-messaging bridge.
  */
+import { readFileSync } from 'node:fs';
 
 const NO_GROUP = -1;
+const LOCALES_DIR = new URL('../../_locales/', import.meta.url);
+const DEFAULT_LOCALE = 'en';
+
+/** @param {string} locale @returns {Record<string, {message: string, placeholders?: Record<string, {content: string}>}>} */
+export function loadMessages(locale) {
+  return JSON.parse(readFileSync(new URL(`${locale}/messages.json`, LOCALES_DIR), 'utf8'));
+}
+
+/**
+ * Fake `chrome.i18n` backed by the real `_locales` catalogues, with Chrome's
+ * lookup rules: UI language → its base language → default locale; named
+ * placeholders (`$NAME$`) expand to their `content`, then `$1`…`$9` to the
+ * substitutions; an unknown key yields ''.
+ * @param {string} [uiLanguage]  e.g. 'en-US', 'es-419'.
+ */
+export function createI18nFake(uiLanguage = 'en-US') {
+  const state = { uiLanguage };
+  const catalogue = (locale) => { try { return loadMessages(locale); } catch { return {}; } };
+  const cache = new Map();
+  const messagesFor = (locale) => {
+    if (!cache.has(locale)) cache.set(locale, catalogue(locale));
+    return cache.get(locale);
+  };
+  return {
+    getUILanguage: () => state.uiLanguage,
+    /** @param {string} key @param {string|string[]} [substitutions] */
+    getMessage(key, substitutions = []) {
+      const subs = [substitutions].flat();
+      const chain = [state.uiLanguage.replace('-', '_'), state.uiLanguage.split(/[-_]/)[0], DEFAULT_LOCALE];
+      const entry = chain.map((l) => messagesFor(l)[key]).find(Boolean);
+      if (!entry) return '';
+      const positional = (text) => text.replace(/\$([1-9])/g, (_, n) => String(subs[Number(n) - 1] ?? ''));
+      const placeholders = Object.fromEntries(
+        Object.entries(entry.placeholders ?? {}).map(([name, p]) => [name.toLowerCase(), p.content]),
+      );
+      // Named placeholders become their `$n` content first; substitution is then a single pass,
+      // so a substituted value that itself contains `$1` is not expanded again.
+      return positional(entry.message.replace(/\$([A-Za-z0-9_@]+)\$/g, (m, name) => placeholders[name.toLowerCase()] ?? m));
+    },
+    /** Test helper (not part of the real API): switches the browser UI language. */
+    setUILanguage(lang) { state.uiLanguage = lang; },
+  };
+}
 
 /** @returns {{addListener:(fn:Function)=>void, fns:Function[], emit:(...a:any[])=>void}} */
 function event() {
@@ -47,9 +91,10 @@ function createPort() {
 }
 
 /**
+ * @param {{uiLanguage?: string}} [opts]
  * @returns Fake `chrome` object plus test helpers.
  */
-export function createChromeFake() {
+export function createChromeFake({ uiLanguage = 'en-US' } = {}) {
   /** @type {any[]} */
   const tabs = [];
   /** @type {any[]} */
@@ -75,6 +120,7 @@ export function createChromeFake() {
   const liveGroups = () => groups.filter((g) => tabs.some((t) => t.groupId === g.id));
 
   const chrome = {
+    i18n: createI18nFake(uiLanguage),
     runtime: {
       id: 'ext-id',
       lastError: undefined,
@@ -151,6 +197,8 @@ export function createChromeFake() {
     ports,
     connectNativeCalls,
     /** @param {{id:number,url:string,title:string,pinned?:boolean,windowId?:number}} t */
+    /** Switches the browser UI language seen by `chrome.i18n`. */
+    setUILanguage(lang) { chrome.i18n.setUILanguage(lang); },
     addTab(t) { tabs.push({ windowId: 1, pinned: false, groupId: NO_GROUP, ...t }); },
     tab: (id) => tabs.find((t) => t.id === id),
     groupOf: (id) => groups.find((g) => g.id === tabs.find((t) => t.id === id)?.groupId),

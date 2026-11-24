@@ -33,21 +33,26 @@ flowchart TB
 
 ## Components (C4 level 2)
 
+Arrows show who calls whom. `classifier.js` receives the two model providers
+and the circuit breakers from `background.js` instead of importing them.
+
 ```mermaid
 flowchart TB
     subgraph ext["Extension"]
+        ui["popup · options<br/>(own pages only)"]
         sw["background.js<br/>service worker: events · scheduling · locks · messaging"]
         cfg["config.js<br/>settings · applyPolicy · consent"]
         ledger["ledger.js<br/>what the user ungrouped"]
         redact["redact.js<br/>minimization · PII masking"]
-        cls["classifier.js<br/>provider chain · circuit breaker"]
+        cls["classifier.js<br/>provider chain"]
+        res["resilience.js<br/>retry · circuit breaker"]
         pc["providers/claude.js"]
         pn["providers/nano.js"]
         ph["heuristic.js"]
+        prm["prompt.js<br/>system prompt · schema"]
         val["validate.js<br/>normalizeResult"]
         grp["grouper.js · catchall.js"]
         link["bridge.js<br/>native-messaging link"]
-        ui["popup · options<br/>(own pages only)"]
     end
     subgraph br["Bridge (optional)"]
         host["host.js<br/>native host · token · allowlist"]
@@ -56,11 +61,18 @@ flowchart TB
 
     ui -- "validated messages" --> sw
     sw --> cfg
-    sw --> ledger --> redact --> cls
+    sw --> ledger
+    sw --> redact
+    sw --> cls
+    sw -- "breakers" --> res
+    sw --> grp
     cls --> pc
     cls --> pn
     cls --> ph
-    cls --> val --> grp
+    cls --> val
+    pc --> prm
+    pn --> prm
+    pc -- "withRetry" --> res
     sw <--> link
     link <-- "stdio frames" --> host
     host <-- "pipe / socket + token" --> mcp
@@ -72,16 +84,17 @@ flowchart TB
 sequenceDiagram
     participant C as Chrome
     participant SW as Service worker
-    participant R as redact + policy
+    participant R as redact
     participant P as Provider chain
     participant V as normalizeResult
 
     C->>SW: tabs.onUpdated (complete)
     SW->>SW: debounce, throttle and lock per window
-    SW->>R: loose tabs minus ledger and excluded hosts
+    SW->>SW: loose tabs the ledger allows
+    SW->>R: candidate tabs
     R-->>SW: title · host · redacted path
     alt consent accepted and Claude available
-        SW->>P: Claude (forced tool call)
+        SW->>P: Claude (forced tool call), without excluded hosts
         P-->>SW: groups, or failure
     end
     opt Claude unavailable or failed
@@ -90,10 +103,71 @@ sequenceDiagram
     opt no model available
         SW->>P: domain heuristic
     end
-    SW->>V: raw result
+    P->>V: raw result
     V-->>SW: known ids · sanitized names · whitelisted colors
     SW->>C: tabs.group / tabGroups.update
     Note over SW,C: No catch-all group in automatic mode
+```
+
+## Sequence — provider chain with fallback
+
+What happens inside the provider chain, in the default order.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CL as classifier.js
+    participant BR as Circuit breaker
+    participant PC as providers/claude.js
+    participant API as Claude API or proxy
+    participant PN as providers/nano.js
+    participant HE as heuristic.js
+
+    CL->>BR: isOpen for claude
+    alt breaker open, no consent, or no key and no proxy
+        Note over CL: Claude is skipped and the reason is recorded
+    else Claude is usable
+        Note over CL: Tabs on excluded hosts are kept back
+        CL->>PC: classifyWithClaude(remaining tabs)
+        loop up to 3 attempts
+            PC->>API: POST with forced tool call, 20 s timeout
+            API-->>PC: tool_use, or an error
+            Note over PC: Retry on 408, 429, 5xx, timeout, network error
+        end
+        alt success
+            PC-->>CL: groups
+            CL->>HE: groupByDomain(excluded-host tabs)
+            CL->>BR: recordSuccess
+        else failure
+            PC-->>CL: error
+            CL->>BR: recordFailure
+            Note over BR: 3 failures in a row open it for 5 minutes
+        end
+    end
+    opt Claude was skipped or failed
+        CL->>PN: availability, then classifyWithNano
+        Note over PN: Skipped unless available or if its breaker is open
+        PN-->>CL: groups, or an error
+    end
+    opt no model produced a result
+        CL->>HE: groupByDomain(all tabs)
+        HE-->>CL: groups by registrable domain
+    end
+    CL->>CL: normalizeResult
+```
+
+## Circuit breaker
+
+One per model provider, persisted in `chrome.storage.session`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Closed: success resets the count
+    Closed --> Open: 3rd failure in a row
+    Open --> Trial: 5 minutes elapsed
+    Trial --> Closed: success
+    Trial --> Open: failure
 ```
 
 ## Sequence — Claude Desktop groups the tabs
@@ -120,7 +194,7 @@ sequenceDiagram
     M->>H: request + token
     H->>SW: native message
     SW->>SW: normalizeResult (eligible ids only)
-    SW->>C: tabs.group / tabGroups.update (+ "Varios" catch-all)
+    SW->>C: tabs.group / tabGroups.update (+ catch-all group)
     SW-->>D: summary of what was grouped
 ```
 

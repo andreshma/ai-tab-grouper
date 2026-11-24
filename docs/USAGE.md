@@ -1,8 +1,9 @@
 # User Manual
 
 AI Tab Grouper groups your Chrome tabs by topic, automatically while you
-browse or on demand. The interface is in Spanish; this manual quotes each
-label with its English meaning.
+browse or on demand. The interface follows your browser language: English by
+default, Spanish when Chrome is set to Spanish. This manual quotes the English
+labels.
 
 ## Contents
 
@@ -32,14 +33,13 @@ reserves, and the extension id depends on the folder path.
 
 ## First run
 
-The options page ("Configuración") opens after installing. Nothing is sent
+The options page ("Settings") opens after installing. Nothing is sent
 anywhere until you accept the data notice.
 
 - **Without a key** the extension already works: it groups by domain, fully
   offline.
 - **With your own Anthropic API key:** accept the data notice, paste the key
-  under "API key de Anthropic", press "Probar conexión" (test connection) and
-  then "Guardar" (save).
+  under "Anthropic API key", press "Test connection" and then "Save".
 
 ## Grouping engines
 
@@ -52,21 +52,29 @@ The extension tries these in order and falls back automatically:
 | Domain heuristic | Nothing | Nothing |
 
 Query strings, fragments, page content and cookies are never sent. Hosts you
-list under "Dominios que nunca salen del dispositivo" (domains that never
-leave the device) are never sent either. See [PRIVACY.md](../PRIVACY.md).
+list under "Domains that never leave the device" are never sent either. See [PRIVACY.md](../PRIVACY.md).
 
 ## Using it
 
 - **Automatic:** new tabs join a matching group, or form a new one, shortly
   after they finish loading.
-- **Popup:** "Agrupar ahora" (group the loose tabs of the current window),
-  "Reorganizar todo" (regroup every tab of the window) and "Desagrupar"
-  (ungroup).
+- **Popup:** "Group now" (group the loose tabs of the current window),
+  "Reorganize all" (regroup every tab of the window) and "Ungroup".
 - **Shortcut:** `Alt+Shift+G` groups the loose tabs of the current window.
 
 A tab you pull out of a group stays out until it navigates to another site.
-In manual mode, tabs that fit no topic go to a collapsed grey group called
-"Varios" (miscellaneous); you can turn that off in the options page.
+In manual mode, tabs that fit no topic go to a collapsed grey catch-all group
+called "Misc" ("Varios" when group names are in Spanish); you can turn that off
+in the options page.
+
+### Language
+
+The interface language is the browser's; there is no separate switch. The
+language of the **group names** is a setting ("Group name language"):
+"Automatic (browser language)" by default, or English or Spanish explicitly.
+Browsers in any other language get the English interface and English group
+names. Changing the language never creates a second catch-all group: an
+existing "Misc" or "Varios" group keeps receiving the leftover tabs.
 
 ## Claude Desktop bridge
 
@@ -74,8 +82,8 @@ The bridge lets Claude Desktop list and group your tabs using your Claude
 session, with no API key. It is optional and local: an MCP server that Claude
 Desktop starts, and a native-messaging host that Chrome starts.
 
-1. In the options page, under "Claude Desktop (tu sesión de Claude)", copy the
-   extension id ("ID de esta extensión").
+1. In the options page, under "Claude Desktop (your Claude session)", copy the
+   extension id ("This extension's ID").
 2. From the deployed folder, register the host and add the MCP server to
    Claude Desktop:
    ```bash
@@ -99,8 +107,12 @@ Details and the security model are in [bridge/README.md](../bridge/README.md).
 | `consentVersion` | `0` | sync | No remote call without the current consent |
 | `claudeModel` | `claude-haiku-5-5` | sync | Can be restricted by `allowedModels` |
 | `preferOnDevice` / `autoGroup` / `sendPath` | `false` / `true` / `true` | sync | |
+| `enableClaude` / `enableNano` / `enableHeuristic` | `true` / `true` / `true` | sync | Which engines the chain may use; can be restricted by `allowedProviders` |
+| `language` | `auto` | sync | Language of generated group names: `auto` (browser language), `en` or `es` |
+| `catchAllGroup` | `true` | sync | Manual and Claude Desktop runs put leftover tabs in the catch-all group ("Misc" / "Varios") |
+| `enableDesktopBridge` | `false` | sync | Can be forced off by `allowDesktopBridge` |
 | `excludedHosts` | `[]` | sync and policy | Never leave the device |
-| `minGroupSize` · `debounceMs` · `minIntervalMs` · `maxTabsPerRequest` | 2 · 2000 · 10000 · 60 | sync | Quality and cost control |
+| `minGroupSize` · `debounceMs` · `minIntervalMs` · `maxTabsPerRequest` | 2 · 2000 · 10000 · 60 | sync | Quality and cost control; `debounceMs` has no field in the options page |
 
 ## Enterprise policy
 
@@ -115,14 +127,14 @@ restrict what the user may do. Guide:
 
 | Symptom | Likely cause | What to do |
 |---|---|---|
-| "Claude en pausa (circuit breaker)" (Claude paused) | Three failures in a row (401, 429 or 5xx) | Options → "Probar conexión" resets it; check the key or proxy; it recovers on its own after 5 minutes |
-| "Claude inactivo: falta aceptar el aviso" (consent missing) | The consent version is out of date | Accept the notice and save |
+| "Claude paused (circuit breaker)" | Three failures in a row (401, 429 or 5xx) | Options → "Test connection" resets it; check the key or proxy; it recovers on its own after 5 minutes |
+| "Claude inactive: accept the data notice" | The consent version is out of date | Accept the notice and save |
 | Always the domain heuristic | No key or proxy, Gemini Nano unavailable, or the `allowedProviders` policy | Check `chrome://policy` and the options page |
 | CORS error in proxy mode | The proxy does not allow `chrome-extension://<ID>` with credentials | See the contract in [ENTERPRISE_DEPLOYMENT.md](ENTERPRISE_DEPLOYMENT.md) |
-| The key disappears after a restart | Default behavior (session storage) or the `apiKeyStorage=session` policy | Tick "remember" if the policy allows it |
-| "Claude Desktop: host no instalado" (host not installed) | The native host is not registered for this browser | Run `node bridge/install.mjs --extension-id <EXTENSION_ID>` |
-| "Claude Desktop: reconectando…" (reconnecting) | Chrome found a host but could not use it: registered for another extension id, or the launcher points to files that no longer exist | The options page shows the exact error in parentheses; run `node bridge/doctor.mjs`, then reinstall with the current id |
-| "Extensión actualizada a medias" (half-updated) | The files changed but the service worker is still the old one | Press reload in `chrome://extensions` |
+| The key disappears after a restart | Default behavior (session storage) or the `apiKeyStorage=session` policy | Tick "Remember the key on this device" if the policy allows it |
+| "Claude Desktop: host not installed" | The native host is not registered for this browser | Run `node bridge/install.mjs --extension-id <EXTENSION_ID>` |
+| "Claude Desktop: reconnecting…" | Chrome found a host but could not use it: registered for another extension id, or the launcher points to files that no longer exist | The options page shows the exact error in parentheses; run `node bridge/doctor.mjs`, then reinstall with the current id |
+| "Extension half-updated" | The files changed but the service worker is still the old one | Press reload in `chrome://extensions` |
 | Claude Desktop does not see the tools | It was running when the bridge was installed | Quit it completely, open it again and start a new chat |
 | Where are the logs? | — | `chrome://extensions` → Service worker → Inspect. Tab data is never logged |
 

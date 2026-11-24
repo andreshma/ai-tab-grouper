@@ -39,7 +39,7 @@ const fromExtension = new NativeMessageDecoder((msg) => {
   if (!entry) return;
   pending.delete(msg.id);
   clearTimeout(entry.timer);
-  entry.reply(msg.error ? { error: { message: String(msg.error.message ?? 'Error en la extensión') } } : { result: msg.result });
+  entry.reply(msg.error ? { error: { message: String(msg.error.message ?? 'Extension error') } } : { result: msg.result });
 });
 
 process.stdin.on('data', (chunk) => {
@@ -70,12 +70,12 @@ const server = net.createServer((socket) => {
       return;
     }
     authenticated = true;
-    if (!RELAYED_METHODS.has(req?.method)) { reply({ error: { message: `método no permitido: ${req?.method}` } }); return; }
+    if (!RELAYED_METHODS.has(req?.method)) { reply({ error: { message: `method not allowed: ${req?.method}` } }); return; }
 
     const id = ++seq;
     const timer = setTimeout(() => {
       pending.delete(id);
-      reply({ error: { message: 'La extensión no respondió a tiempo' } });
+      reply({ error: { message: 'The extension did not respond in time' } });
     }, EXTENSION_TIMEOUT_MS);
     pending.set(id, { reply, timer });
     try {

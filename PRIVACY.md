@@ -21,7 +21,7 @@ The extension reads each tab's address locally to extract the domain and the pat
 
 ## Who it is shared with
 
-- **Anthropic, PBC** (api.anthropic.com), only if you enable Claude and accept the notice in "Configuración" ("Settings"), using **your own** API key; or **your organization's proxy** if IT configured one. Processing at Anthropic is governed by the terms of your account/organization with Anthropic.
+- **Anthropic, PBC** (api.anthropic.com), only if you enable Claude and accept the notice in the extension's "Settings" page, using **your own** API key; or **your organization's proxy** if IT configured one. Processing at Anthropic is governed by the terms of your account/organization with Anthropic.
 - **Your Claude Desktop session**, only if you enable the local bridge and accept the notice: the data goes through a local program installed by you and reaches your conversation with Claude when you ask it to organize your tabs.
 - **Nobody else.** The developer of the extension operates no servers, does not receive, store, sell or share data, and uses no analytics or telemetry.
 - Gemini Nano (optional) and grouping by domain run **100% on your device**.

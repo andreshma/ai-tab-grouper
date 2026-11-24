@@ -21,7 +21,8 @@ import { normalizeResult } from './validate.js';
  * @typedef {Object} ClassificationResult
  * @property {string} provider   Provider that produced `groups` ('none' if all failed/skipped).
  * @property {import('./validate.js').GroupAssignment[]} groups
- * @property {{provider: string, message: string}[]} errors  Failures/skips, for status UI.
+ * @property {{provider: string, message: string, code?: 'breaker-open'|'unavailable'}[]} errors  Failures/skips, for status UI.
+ *   `code` marks the chain's own (non-exception) reasons; the UI localises them, so `message` stays a stable English fallback.
  */
 
 const SKIP = Symbol('skip');
@@ -42,13 +43,13 @@ export async function classifyTabs(input, settings, deps) {
   for (const provider of resolveProviderOrder(settings)) {
     const breaker = provider === 'heuristic' ? null : deps.breakerFor(provider);
     if (breaker && (await breaker.isOpen())) {
-      errors.push({ provider, message: 'circuit breaker abierto' });
+      errors.push({ provider, code: 'breaker-open', message: 'circuit breaker open' });
       continue;
     }
     try {
       const raw = await runProvider(provider, input, settings, deps);
       if (raw === SKIP) {
-        errors.push({ provider, message: 'no disponible' });
+        errors.push({ provider, code: 'unavailable', message: 'unavailable' });
         continue;
       }
       await breaker?.recordSuccess();

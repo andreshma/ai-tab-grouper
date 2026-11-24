@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>AI Tab Grouper</title>
@@ -12,17 +12,17 @@
       <img src="../../icons/icon32.png" width="20" height="20" alt="">
       <h1>AI Tab Grouper</h1>
     </header>
-    <section class="status" id="status" aria-live="polite"><p class="muted">Cargando…</p></section>
+    <section class="status" id="status" aria-live="polite"><p class="muted" data-i18n="popup_loading"></p></section>
     <div class="actions">
-      <button id="group" class="primary">Agrupar ahora</button>
+      <button id="group" class="primary" data-i18n="popup_groupNow"></button>
       <div class="row">
-        <button id="regroup" title="Reclasifica también las pestañas ya agrupadas">Reorganizar todo</button>
-        <button id="ungroup" class="ghost">Desagrupar</button>
+        <button id="regroup" data-i18n="popup_regroup" data-i18n-title="popup_regroupTitle"></button>
+        <button id="ungroup" class="ghost" data-i18n="popup_ungroup"></button>
       </div>
     </div>
-    <label class="check"><input type="checkbox" id="auto"> Agrupar automáticamente al navegar</label>
+    <label class="check"><input type="checkbox" id="auto"> <span data-i18n="popup_auto"></span></label>
     <footer>
-      <a href="#" id="options">Configuración</a>
+      <a href="#" id="options" data-i18n="popup_settings"></a>
       <span class="muted"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></span>
     </footer>
   </main>

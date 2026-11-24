@@ -2,6 +2,8 @@
 
 ## Listing
 
+The extension ships `_locales/en` (default) and `_locales/es`, so the store shows the name and summary of the matching locale automatically; the summaries below are the `ext_description` messages. The detailed description is entered per locale in the dashboard.
+
 ### English (en) locale
 
 - **Name:** AI Tab Grouper

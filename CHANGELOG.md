@@ -6,7 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- `CITATION.cff`, linked from the README (left out of the store package).
+- `docs/adr/template.md` for new decision records.
+- Internationalization ([ADR-0004](docs/adr/0004-internationalization.md)): the interface is available in English (default) and Spanish and follows the browser language. Messages live in `_locales/en` and `_locales/es`; the manifest name, description and shortcut description are localized too.
+- "Automatic (browser language)" option for the group-name language.
+- `test/i18n.test.js`: the same keys in every locale, every referenced key exists, no unused message, consistent placeholders, store length limits per locale. The Chrome API fake gained `chrome.i18n`, backed by the real catalogues.
+- Chrome Web Store gate: checks `default_locale`, that every `__MSG_*__` in the manifest resolves in every locale, the name and description limits per locale, and that the locale files are in the package.
+
+### Changed
+- **The interface is now English unless the browser is in Spanish.** Spanish wording is unchanged.
+- The `language` setting (group names) defaults to `auto` instead of `es`: Spanish browsers keep Spanish names; other browsers that never saved the settings now get English names. A saved `es` or `en` is kept.
+- The catch-all group is recognized by its title in any supported language ("Misc" or "Varios"), so changing the language reuses the existing group instead of creating a second one. Its default title follows the group-name language; with no setting and an unsupported language it is now "Misc" (was "Varios").
+- The system prompt gives its example group names in English and states the language for new names explicitly; instructions to the model were already in English.
+- Claude Desktop bridge: the MCP server instructions, tool titles and descriptions, validation errors, and the output of `install.mjs` and `doctor.mjs` are in English. Tool names and schemas are unchanged.
+- `managed_schema.json`: policy titles and descriptions are in English. Policy keys are unchanged.
+- `npm run deploy:local` prints in English and copies `_locales`; `npm run cws:check` prints its justifications in English.
+- The provider chain reports skipped providers with a `code` (`unavailable`, `breaker-open`) instead of a Spanish message that the popup compared against.
+- README: Mermaid diagrams (module map, grouping pipeline, provider chain with fallback, Claude Desktop bridge) replace the text diagram; new Usage, Components and Configuration sections.
+- `docs/ARCHITECTURE.md` expanded: scheduling, ledger outcomes, data minimization, provider chain, resilience, state, messages and limits, with Mermaid diagrams.
+- `docs/DIAGRAMS.md`: the component diagram follows the real call graph; new sequence for the provider chain with fallback and a circuit-breaker state diagram.
+- `docs/USAGE.md`: the settings table lists every setting.
+
 ### Fixed
+- `src/lib/resilience.js`: the circuit-breaker comment promised a single trial call after the cooldown; it now describes what the code does (calls pass again until one fails). No behavior change.
+- `.gitignore`: local tool telemetry (`telemetry.jsonl`) is ignored.
 - Bridge host: the Unix socket is created with a restrictive umask, so it is never wider than 0600, not even between bind and chmod. The test that checks it now waits for the host to be ready (it failed intermittently in CI).
 
 ## [1.4.2] - 2026-11-20
