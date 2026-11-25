@@ -5,6 +5,9 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Local tool telemetry (machine-specific, never published).
+telemetry.jsonl
+
 # Local assistant and editor configuration (machine-specific, never published).
 CLAUDE.md
 .claude/

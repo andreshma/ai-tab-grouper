@@ -1,0 +1,554 @@
+{
+  "ext_name": {
+    "message": "AI Tab Grouper",
+    "description": "Extension name (brand, not translated)."
+  },
+  "ext_description": {
+    "message": "Group your tabs by topic with AI (Claude or local Gemini Nano) or by domain, automatically or manually.",
+    "description": "Extension description shown in chrome://extensions and the Chrome Web Store (max 132 characters)."
+  },
+  "cmd_groupNow": {
+    "message": "Group the ungrouped tabs of the current window",
+    "description": "Description of the keyboard shortcut in chrome://extensions/shortcuts."
+  },
+  "popup_loading": {
+    "message": "Loading…",
+    "description": "Popup: placeholder while the status loads."
+  },
+  "popup_groupNow": {
+    "message": "Group now",
+    "description": "Popup: primary button, groups the ungrouped tabs."
+  },
+  "popup_regroup": {
+    "message": "Reorganize all",
+    "description": "Popup: button that reclassifies every tab."
+  },
+  "popup_regroupTitle": {
+    "message": "Also reclassifies tabs that are already grouped",
+    "description": "Popup: tooltip of the \"Reorganize all\" button."
+  },
+  "popup_ungroup": {
+    "message": "Ungroup",
+    "description": "Popup: button that removes every tab from its group."
+  },
+  "popup_auto": {
+    "message": "Group automatically while browsing",
+    "description": "Popup: checkbox that toggles automatic grouping."
+  },
+  "popup_settings": {
+    "message": "Settings",
+    "description": "Popup: link to the options page."
+  },
+  "popup_processing": {
+    "message": "Working…",
+    "description": "Popup: shown while an action runs."
+  },
+  "popup_error": {
+    "message": "Error",
+    "description": "Popup: generic failure when the service worker gives no detail."
+  },
+  "popup_ungrouped": {
+    "message": "$COUNT$ tabs ungrouped.",
+    "description": "Popup: result of the \"Ungroup\" action.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "provider_nano": {
+    "message": "Gemini Nano (on-device)",
+    "description": "Provider label in the popup status line."
+  },
+  "provider_heuristic": {
+    "message": "Domain heuristic",
+    "description": "Provider label in the popup status line."
+  },
+  "ago_seconds": {
+    "message": "$COUNT$s ago",
+    "description": "Relative time, seconds.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "ago_minutes": {
+    "message": "$COUNT$ min ago",
+    "description": "Relative time, minutes.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "ago_hours": {
+    "message": "$COUNT$ h ago",
+    "description": "Relative time, hours.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_noResponse": {
+    "message": "No response from the service worker",
+    "description": "Popup status: the background did not answer."
+  },
+  "status_noRuns": {
+    "message": "No runs in this session.",
+    "description": "Popup status: nothing has run yet."
+  },
+  "status_noProvider": {
+    "message": "Not grouped: no provider available for $COUNT$ tabs · $AGO$",
+    "description": "Popup status: every provider failed or was skipped.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "ago": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_nothingToGroup": {
+    "message": "Nothing to group: no ungrouped tabs · $AGO$",
+    "description": "Popup status: the last run found no candidates.",
+    "placeholders": {
+      "ago": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_lastRun": {
+    "message": "$PROVIDER$ · $TABS$ tabs in $GROUPS$ groups · $AGO$",
+    "description": "Popup status: summary of the last run.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "tabs": {
+        "content": "$2"
+      },
+      "groups": {
+        "content": "$3"
+      },
+      "ago": {
+        "content": "$4"
+      }
+    }
+  },
+  "status_fallback": {
+    "message": "Fallback: $PROVIDER$ → $MESSAGE$",
+    "description": "Popup status: a provider failed and the chain fell through.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "message": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_bridgeConnected": {
+    "message": "Claude Desktop: connected",
+    "description": "Popup status: bridge state."
+  },
+  "status_bridgeNotInstalled": {
+    "message": "Claude Desktop: host not installed",
+    "description": "Popup status: bridge state."
+  },
+  "status_bridgeReconnecting": {
+    "message": "Claude Desktop: reconnecting…",
+    "description": "Popup status: bridge state."
+  },
+  "status_managed": {
+    "message": "Managed by your organization",
+    "description": "Popup status: enterprise policy is present."
+  },
+  "status_managedProxy": {
+    "message": "Managed by your organization · corporate proxy",
+    "description": "Popup status: enterprise policy with a proxy endpoint."
+  },
+  "status_halfUpdated": {
+    "message": "Extension half-updated: press ↻ in chrome://extensions.",
+    "description": "Popup status: the service worker is older than the popup."
+  },
+  "status_claudeNoConsent": {
+    "message": "Claude inactive: accept the data notice in Settings first.",
+    "description": "Popup status: a key exists but the disclosure was not accepted."
+  },
+  "status_noEngine": {
+    "message": "In-Chrome grouping has no engine: enable \"Domain fallback\" or Gemini Nano in Settings.",
+    "description": "Popup status: no usable provider."
+  },
+  "status_heuristicOnly": {
+    "message": "In-Chrome grouping: by domain (no API key or Gemini Nano).",
+    "description": "Popup status: only the heuristic is usable."
+  },
+  "status_desktopHint": {
+    "message": "To group by topic, ask Claude Desktop.",
+    "description": "Popup status: appended to status_heuristicOnly when the bridge is connected."
+  },
+  "status_claudePaused": {
+    "message": "Claude paused (circuit breaker) after repeated errors.",
+    "description": "Popup status: the Claude circuit breaker is open."
+  },
+  "err_breakerOpen": {
+    "message": "circuit breaker open",
+    "description": "Fallback reason: provider skipped because its circuit breaker is open."
+  },
+  "err_groupingInProgress": {
+    "message": "A grouping run is already in progress in this window",
+    "description": "Error: manual run requested while another one is running."
+  },
+  "err_bridgeDisabled": {
+    "message": "The Claude Desktop bridge is disabled in the extension",
+    "description": "Error returned to Claude Desktop."
+  },
+  "err_noConsent": {
+    "message": "The user has not accepted the data notice in the extension settings",
+    "description": "Error returned to Claude Desktop."
+  },
+  "err_invalidWindowId": {
+    "message": "Invalid windowId",
+    "description": "Error: malformed request."
+  },
+  "err_unknownMessage": {
+    "message": "Unknown message: $TYPE$",
+    "description": "Error: unknown internal message type.",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_unsupportedMethod": {
+    "message": "Unsupported method: $METHOD$",
+    "description": "Error returned to the bridge host.",
+    "placeholders": {
+      "method": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_hostDisconnected": {
+    "message": "Host disconnected",
+    "description": "Bridge status detail."
+  },
+  "err_claudeNoToolUse": {
+    "message": "Claude response without tool_use (stop_reason=$REASON$)",
+    "description": "Error: the model did not call the tool.",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_promptApiBrowser": {
+    "message": "Prompt API not available in this browser",
+    "description": "Error: Gemini Nano download requested without the Prompt API."
+  },
+  "err_promptApiContext": {
+    "message": "Prompt API not available in this context",
+    "description": "Error: Gemini Nano classification without the Prompt API."
+  },
+  "opt_title": {
+    "message": "AI Tab Grouper · Settings",
+    "description": "Options page: document title."
+  },
+  "opt_managedTitle": {
+    "message": "Managed by your organization.",
+    "description": "Options page: banner shown under enterprise policy."
+  },
+  "opt_managedBody": {
+    "message": "Locked options are set by IT and cannot be changed here.",
+    "description": "Options page: banner detail."
+  },
+  "opt_claudeHeading": {
+    "message": "Claude (primary provider)",
+    "description": "Options page: section heading."
+  },
+  "opt_disclosureTitle": {
+    "message": "What data is sent and to whom",
+    "description": "Options page: data disclosure heading."
+  },
+  "opt_disclosureBody": {
+    "message": "If you enable Claude (API) or the Claude Desktop bridge, the following is sent to {dest} —or to your Claude Desktop session when you ask it to—: the <b>title</b>, the <b>domain</b> and, if you allow it below, the redacted <b>URL path</b> of your tabs. URL parameters, fragments, page content, cookies and passwords are never sent; emails, IDs and long numbers are masked.",
+    "description": "Options page: data disclosure. Keep the {dest} slot (destination name) and the <b>…</b> emphasis markers."
+  },
+  "opt_disclosureUse": {
+    "message": "Sole use: deciding which group each tab belongs to. The extension developer does not receive, store or sell any data. Gemini Nano and the domain heuristic run 100% on your device and do not require this consent.",
+    "description": "Options page: data disclosure, second paragraph."
+  },
+  "opt_consent": {
+    "message": "I understand and agree to send this data to group my tabs.",
+    "description": "Options page: consent checkbox."
+  },
+  "opt_destAnthropic": {
+    "message": "Anthropic (api.anthropic.com)",
+    "description": "Options page: destination named in the disclosure (direct API)."
+  },
+  "opt_destProxy": {
+    "message": "your organization's proxy ($HOST$) and from there to Anthropic",
+    "description": "Options page: destination named in the disclosure (corporate proxy).",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_enableClaude": {
+    "message": "Use Claude",
+    "description": "Options page: checkbox."
+  },
+  "opt_proxyInfo": {
+    "message": "Connected through the corporate proxy: the credential lives in your organization's vault, not on this device.",
+    "description": "Options page: shown when policy sets a proxy endpoint."
+  },
+  "opt_apiKeyLabel": {
+    "message": "Anthropic API key",
+    "description": "Options page: field label."
+  },
+  "opt_apiKeyHelp": {
+    "message": "Use a dedicated key with a spend limit. It is never synced or sent anywhere other than api.anthropic.com.",
+    "description": "Options page: field help."
+  },
+  "opt_apiKeySaved": {
+    "message": "•••• $LAST4$ (saved)",
+    "description": "Options page: API key placeholder when a key is stored.",
+    "placeholders": {
+      "last4": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rememberKey": {
+    "message": "Remember the key on this device (otherwise it is cleared when Chrome closes)",
+    "description": "Options page: checkbox."
+  },
+  "opt_modelLabel": {
+    "message": "Model",
+    "description": "Options page: field label."
+  },
+  "opt_modelHelp": {
+    "message": "Small tier recommended (latency/cost). E.g. claude-haiku-5-5.",
+    "description": "Options page: field help."
+  },
+  "opt_testConnection": {
+    "message": "Test connection",
+    "description": "Options page: button."
+  },
+  "opt_clearKey": {
+    "message": "Delete key",
+    "description": "Options page: button."
+  },
+  "opt_keyDeleted": {
+    "message": "Key deleted",
+    "description": "Options page: result of \"Delete key\"."
+  },
+  "opt_enterKey": {
+    "message": "Enter an API key",
+    "description": "Options page: connection test without a key."
+  },
+  "opt_acceptNoticeFirst": {
+    "message": "Accept the data notice first",
+    "description": "Options page: connection test without consent."
+  },
+  "opt_testing": {
+    "message": "Testing…",
+    "description": "Options page: connection test in progress."
+  },
+  "opt_testOk": {
+    "message": "OK · $GROUPS$",
+    "description": "Options page: connection test succeeded; lists the group names returned.",
+    "placeholders": {
+      "groups": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_noGroups": {
+    "message": "no groups",
+    "description": "Options page: connection test succeeded but the model returned no groups."
+  },
+  "opt_desktopHeading": {
+    "message": "Claude Desktop (your Claude session)",
+    "description": "Options page: section heading."
+  },
+  "opt_desktopIntro": {
+    "message": "Lets Claude Desktop, signed in with your own session and without an API key, read your tabs (the same redacted data described in the notice) and group them when you ask. Requires installing the local bridge once.",
+    "description": "Options page: section intro."
+  },
+  "opt_enableBridge": {
+    "message": "Enable Claude Desktop bridge",
+    "description": "Options page: checkbox."
+  },
+  "opt_statusLabel": {
+    "message": "Status:",
+    "description": "Options page: label before a state value."
+  },
+  "opt_extIdLabel": {
+    "message": "This extension's ID (for the installer)",
+    "description": "Options page: field label."
+  },
+  "opt_copy": {
+    "message": "Copy",
+    "description": "Options page: button."
+  },
+  "opt_copied": {
+    "message": "Copied ✓",
+    "description": "Options page: button feedback."
+  },
+  "opt_bridgeInstallHelp": {
+    "message": "In the <code>bridge</code> folder: <code>node install.mjs --extension-id <ID> --configure-claude</code>, then restart Claude Desktop.",
+    "description": "Options page: install hint. Keep the <code>…</code> markers and the command unchanged."
+  },
+  "opt_permissionDenied": {
+    "message": "Permission denied",
+    "description": "Options page: the nativeMessaging permission was refused."
+  },
+  "bridge_off": {
+    "message": "Disabled",
+    "description": "Options page: bridge state."
+  },
+  "bridge_connected": {
+    "message": "Connected to the local host",
+    "description": "Options page: bridge state."
+  },
+  "bridge_notInstalled": {
+    "message": "Host not installed: run the installer",
+    "description": "Options page: bridge state."
+  },
+  "bridge_reconnecting": {
+    "message": "Reconnecting…",
+    "description": "Options page: bridge state."
+  },
+  "opt_nanoHeading": {
+    "message": "Gemini Nano (on-device)",
+    "description": "Options page: section heading."
+  },
+  "opt_enableNano": {
+    "message": "Use Gemini Nano when available",
+    "description": "Options page: checkbox."
+  },
+  "opt_preferOnDevice": {
+    "message": "Prefer on-device over Claude (privacy first)",
+    "description": "Options page: checkbox."
+  },
+  "opt_downloadModel": {
+    "message": "Download model",
+    "description": "Options page: button."
+  },
+  "opt_nanoHelp": {
+    "message": "Requires Chrome with the Prompt API and compatible hardware. Skipped when unavailable.",
+    "description": "Options page: section help."
+  },
+  "nano_available": {
+    "message": "Available",
+    "description": "Options page: Gemini Nano state."
+  },
+  "nano_downloadable": {
+    "message": "Downloadable",
+    "description": "Options page: Gemini Nano state."
+  },
+  "nano_downloading": {
+    "message": "Downloading…",
+    "description": "Options page: Gemini Nano state."
+  },
+  "nano_unavailable": {
+    "message": "Unavailable",
+    "description": "Options page: Gemini Nano state."
+  },
+  "nano_downloadProgress": {
+    "message": "Downloading $PERCENT$%",
+    "description": "Options page: Gemini Nano download progress.",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_behaviorHeading": {
+    "message": "Behavior",
+    "description": "Options page: section heading."
+  },
+  "opt_autoGroup": {
+    "message": "Group automatically when tabs load",
+    "description": "Options page: checkbox."
+  },
+  "opt_enableHeuristic": {
+    "message": "Domain fallback if the AI fails",
+    "description": "Options page: checkbox."
+  },
+  "opt_catchAll": {
+    "message": "When grouping manually or with Claude Desktop, put leftover tabs in \"$NAME$\"",
+    "description": "Options page: checkbox. NAME is the catch-all group title for the selected group-name language.",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_languageLabel": {
+    "message": "Group name language",
+    "description": "Options page: field label."
+  },
+  "opt_languageAuto": {
+    "message": "Automatic (browser language)",
+    "description": "Options page: option of the group-name language select."
+  },
+  "opt_minGroupSize": {
+    "message": "Min. tabs per new group",
+    "description": "Options page: field label."
+  },
+  "opt_minInterval": {
+    "message": "Min. auto interval (s)",
+    "description": "Options page: field label."
+  },
+  "opt_maxTabs": {
+    "message": "Max. tabs per request",
+    "description": "Options page: field label."
+  },
+  "opt_privacyHeading": {
+    "message": "Privacy",
+    "description": "Options page: section heading."
+  },
+  "opt_sendPath": {
+    "message": "Send the redacted URL path (no query or fragment) for better accuracy",
+    "description": "Options page: checkbox."
+  },
+  "opt_excludedHostsLabel": {
+    "message": "Domains that never leave the device (one per line)",
+    "description": "Options page: field label."
+  },
+  "opt_excludedHostsPlaceholder": {
+    "message": "mybank.com\nintranet.example.com",
+    "description": "Options page: placeholder of the excluded-domains textarea (one host per line)."
+  },
+  "opt_excludedHostsHelp": {
+    "message": "Grouped locally by domain. Subdomains included.",
+    "description": "Options page: field help."
+  },
+  "opt_policyHosts": {
+    "message": "Your organization also excludes: $HOSTS$",
+    "description": "Options page: hosts excluded by enterprise policy.",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_locked": {
+    "message": "Locked by your organization's policy",
+    "description": "Options page: tooltip on policy-locked fields."
+  },
+  "opt_save": {
+    "message": "Save",
+    "description": "Options page: submit button."
+  },
+  "opt_saved": {
+    "message": "Saved ✓",
+    "description": "Options page: save feedback."
+  }
+}

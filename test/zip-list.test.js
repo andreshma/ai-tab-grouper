@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import { listZipEntries } from '../scripts/zip-list.mjs';
@@ -56,5 +57,26 @@ describe('zip listing (CWS gate, no unzip binary)', () => {
     const zip = buildZip(['a.js', 'b.js']);
     zip.writeUInt32LE(0, zip.length - 22 - 46 - 4); // corrupt the second central header signature
     assert.throws(() => listZipEntries(zip), /Corrupt zip central directory/);
+  });
+});
+
+describe('package script (what the store zip ships)', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  /** The patterns after `--ignore-files`, unquoted. */
+  const ignored = pkg.scripts.package.split('--ignore-files')[1].trim().split(/\s+/).map((p) => p.replaceAll('"', ''));
+
+  it('ships the locale catalogues', () => {
+    assert.ok(!ignored.some((p) => p.startsWith('_locales') || p === '*.json' || p === '**/*.json'), ignored.join(' '));
+  });
+
+  it('leaves repository-only files out (citation metadata, docs, tests, bridge, tooling)', () => {
+    for (const p of ['CITATION.cff', '*.md', 'docs', 'test', 'bridge', 'scripts', '.github', 'package*.json']) {
+      assert.ok(ignored.includes(p), `${p} must be ignored`);
+    }
+  });
+
+  it('the local deploy copies the locale catalogues too', () => {
+    const deploy = readFileSync(new URL('../scripts/deploy-local.mjs', import.meta.url), 'utf8');
+    assert.match(deploy, /RUNTIME_PATHS = Object\.freeze\(\[[^\]]*'_locales'/);
   });
 });

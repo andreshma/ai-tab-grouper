@@ -109,10 +109,10 @@ describe('MCP handler', () => {
     assert.equal(bad.result.isError, true);
     const down = await handleMessage(
       { jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'list_tabs', arguments: {} } },
-      { ipc: async () => { throw new Error('Chrome no está abierto'); } },
+      { ipc: async () => { throw new Error('Chrome is not open'); } },
     );
     assert.equal(down.result.isError, true);
-    assert.match(down.result.content[0].text, /Chrome no está abierto/);
+    assert.match(down.result.content[0].text, /Chrome is not open/);
   });
 });
 
@@ -179,9 +179,9 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
   const fakeExtension = (msg) => {
     extensionSaw.push(msg);
     const reply = msg.method === 'list_tabs'
-      ? { id: msg.id, result: { windows: [{ windowId: 7, tabs: [{ id: 1, title: 'Vuelos Lisboa', host: 'skyscanner.com' }] }] } }
+      ? { id: msg.id, result: { windows: [{ windowId: 7, tabs: [{ id: 1, title: 'Lisbon flights', host: 'skyscanner.com' }] }] } }
       : msg.method === 'apply_tab_groups'
-        ? { id: msg.id, error: { message: 'El usuario no ha aceptado el aviso de datos' } }
+        ? { id: msg.id, error: { message: 'The user has not accepted the data notice' } }
         : { id: msg.id, result: { ok: true } };
     host.stdin.write(encodeNativeMessage(reply));
   };
@@ -202,7 +202,10 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
     host = spawn(process.execPath, [join(ROOT, 'src', 'host.js'), `chrome-extension://${EXT_ID}/`], { env, stdio: ['pipe', 'pipe', 'pipe'] });
     const dec = new NativeMessageDecoder(fakeExtension);
     host.stdout.on('data', (c) => dec.push(c));
-    for (let i = 0; i < 100 && !existsSync(tokenPath(dir)); i++) await sleep(20);
+    // The token exists before the socket does: wait for the host's "ready" line instead.
+    let hostLog = '';
+    host.stderr.on('data', (c) => { hostLog += c; });
+    for (let i = 0; i < 250 && !hostLog.includes('ready'); i++) await sleep(20);
 
     mcp = spawn(process.execPath, [join(ROOT, 'src', 'mcp-server.js')], { env, stdio: ['pipe', 'pipe', 'pipe'] });
     const lines = new LineDecoder((m) => mcpResponses.push(m));
@@ -231,7 +234,7 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
   it('list_tabs flows end-to-end and is marked untrusted', async () => {
     const res = await mcpCall(3, 'tools/call', { name: 'list_tabs', arguments: { scope: 'current' } });
     assert.equal(res.result.isError, undefined);
-    assert.match(res.result.content[0].text, /Vuelos Lisboa/);
+    assert.match(res.result.content[0].text, /Lisbon flights/);
     assert.ok(res.result.content[0].text.startsWith(UNTRUSTED_NOTICE));
     assert.deepEqual(extensionSaw.at(-1).params, { scope: 'current', onlyUngrouped: false });
   });
@@ -239,7 +242,7 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
   it('extension-side refusals surface as tool errors', async () => {
     const res = await mcpCall(4, 'tools/call', { name: 'apply_tab_groups', arguments: { windowId: 7, groups: [{ name: 'Viajes', tabIds: [1] }] } });
     assert.equal(res.result.isError, true);
-    assert.match(res.result.content[0].text, /aviso de datos/);
+    assert.match(res.result.content[0].text, /data notice/);
   });
 
   it('invalid args never reach the extension', async () => {
@@ -258,7 +261,7 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
     });
     assert.equal((await ask({ id: 1, token: 'f'.repeat(64), method: 'list_tabs' })).error.message, 'unauthorized');
     const token = readFileSync(tokenPath(dir), 'utf8');
-    assert.match((await ask({ id: 2, token, method: 'eval_js' })).error.message, /no permitido/);
+    assert.match((await ask({ id: 2, token, method: 'eval_js' })).error.message, /not allowed/);
   });
 
   it('host exits and revokes the token when Chrome closes the port', async () => {
@@ -267,11 +270,11 @@ describe('E2E: Claude Desktop (MCP) ⇄ host ⇄ extension', () => {
     assert.ok(!existsSync(tokenPath(dir)), 'token revoked');
     const res = await mcpCall(6, 'tools/call', { name: 'list_tabs', arguments: {} });
     assert.equal(res.result.isError, true);
-    assert.match(res.result.content[0].text, /Chrome no está abierto/);
+    assert.match(res.result.content[0].text, /Chrome is not open/);
   });
 });
 
-describe('doctor (diagnóstico end-to-end)', () => {
+describe('doctor (end-to-end diagnostic)', () => {
   it('reports install OK + host inactive, then full PASS once Chrome connects', async () => {
     const tmp = mkdtempSync(join(tmpdir(), 'atg-doc-'));
     const env = {
@@ -280,14 +283,14 @@ describe('doctor (diagnóstico end-to-end)', () => {
     const levels = (rs) => Object.fromEntries(rs.map((r) => [r.name, r.level]));
 
     const before = levels(await runDoctor({ env }));
-    assert.equal(before['Host nativo registrado (chrome)'], 'FAIL', 'detects missing install');
+    assert.equal(before['Native host registered (chrome)'], 'FAIL', 'detects missing install');
 
     assert.equal(spawnSync(process.execPath, [join(ROOT, 'install.mjs'), '--extension-id', EXT_ID, '--configure-claude'], { env }).status, 0);
     const installed = levels(await runDoctor({ env }));
-    for (const k of ['Node.js >= 20', 'Manifest del host válido', 'Launcher existe', 'Launcher apunta a node y host.js existentes', 'Claude Desktop configurado', 'Servidor MCP arranca y expone tools']) {
+    for (const k of ['Node.js >= 20', 'Host manifest valid', 'Launcher exists', 'Launcher points to an existing node and host.js', 'Claude Desktop configured', 'MCP server starts and exposes tools']) {
       assert.equal(installed[k], 'PASS', k);
     }
-    assert.equal(installed['Chrome conectado al host'], 'WARN');
+    assert.equal(installed['Chrome connected to the host'], 'WARN');
 
     const host = spawn(process.execPath, [join(ROOT, 'src', 'host.js')], { env, stdio: ['pipe', 'pipe', 'ignore'] });
     const dec = new NativeMessageDecoder((m) => host.stdin.write(encodeNativeMessage(

@@ -2,25 +2,43 @@
 
 ## Listing
 
+The extension ships `_locales/en` (default) and `_locales/es`, so the store shows the name and summary of the matching
+locale automatically; the summaries below are the `ext_description` messages. The detailed description is entered per
+locale in the dashboard.
+
 ### English (en) locale
 
+This block is the English listing, for the default `en` locale of the dashboard.
+
 - **Name:** AI Tab Grouper
-- **Summary (≤132):** Group your tabs by topic with AI (Claude or local Gemini Nano) or by domain, automatically or manually.
+- **Summary (≤132):** Group your tabs by topic with AI (Claude or local Gemini Nano) or by domain, automatically or
+  manually.
 - **Category:** Productivity / Tools
 - **Description (first paragraph = prominent disclosure):**
-  > Automatically organize your tabs into groups by topic. **To work, it reads the title and address of your tabs.** You can use local AI (Gemini Nano, nothing leaves your device), grouping by domain (no AI) or Anthropic's Claude with your own API key - in that case, and only after your explicit consent, the title and domain of your tabs are sent to Anthropic. No analytics, no servers of our own, no selling of data.
+  > Automatically organize your tabs into groups by topic. **To work, it reads the title and address of your tabs.** You
+  > can use local AI (Gemini Nano, nothing leaves your device), grouping by domain (no AI) or Anthropic's Claude with
+  > your own API key - in that case, and only after your explicit consent, the title and domain of your tabs are sent to
+  > Anthropic. No analytics, no servers of our own, no selling of data.
 
 ### Spanish (es) locale
 
+This block is the Spanish listing, in Spanish on purpose: paste it as is into the `es` locale of the dashboard. It is
+the translation of the English listing above.
+
 - **Nombre:** AI Tab Grouper
-- **Resumen (≤132):** Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual.
+- **Resumen (≤132):** Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma
+  automática o manual.
 - **Categoría:** Productividad / Herramientas
 - **Descripción (primer párrafo = divulgación prominente):**
-  > Organiza automáticamente tus pestañas en grupos por tema. **Para funcionar, lee el título y la dirección de tus pestañas.** Puedes usar IA local (Gemini Nano, nada sale de tu equipo), agrupación por dominio (sin IA) o Claude de Anthropic con tu propia API key — en ese caso, y solo tras tu consentimiento explícito, se envían el título y el dominio de las pestañas a Anthropic. Sin analítica, sin servidores propios, sin venta de datos.
+  > Organiza automáticamente tus pestañas en grupos por tema. **Para funcionar, lee el título y la dirección de tus
+  > pestañas.** Puedes usar IA local (Gemini Nano, nada sale de tu equipo), agrupación por dominio (sin IA) o Claude de
+  > Anthropic con tu propia API key — en ese caso, y solo tras tu consentimiento explícito, se envían el título y el
+  > dominio de las pestañas a Anthropic. Sin analítica, sin servidores propios, sin venta de datos.
 
 ### Common to both locales
 
-- **Assets:** 128×128 icon (included), ≥1 screenshot at 1280×800 or 640×400 (popup + settings), 440×280 promotional tile (optional).
+- **Assets:** 128×128 icon (included), ≥1 screenshot at 1280×800 or 640×400 (popup + settings), 440×280 promotional tile
+  (optional).
 - **Privacy policy (public URL required):** publish `PRIVACY.md` (e.g. GitHub Pages) and paste the URL.
 
 ## "Privacy practices" tab
@@ -48,7 +66,8 @@
 | Authentication information | No | The user's API key is not transmitted to the developer; it is only used towards Anthropic |
 | PII / Health / Financial / Location / Communications / User activity | No | — |
 
-**Certifications** (tick all three): data is not sold to third parties; it is not used for purposes unrelated to the single purpose; it is not used for creditworthiness/lending.
+**Certifications** (tick all three): data is not sold to third parties; it is not used for purposes unrelated to the
+single purpose; it is not used for creditworthiness/lending.
 
 ## Pre-submission checklist
 

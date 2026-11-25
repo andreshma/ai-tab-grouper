@@ -2,7 +2,11 @@
  * @file Popup controller: manual actions + status of the last run.
  */
 import { loadSettings, saveSettings } from '../lib/config.js';
+import { t } from '../lib/i18n.js';
+import { localizePage } from '../ui/localize.js';
 import { describeStatus } from './status.js';
+
+localizePage();
 
 const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const statusEl = $('status');
@@ -28,11 +32,11 @@ async function refresh() {
 async function act(msg) {
   const win = await chrome.windows.getCurrent();
   buttons.forEach((b) => { b.disabled = true; });
-  statusEl.replaceChildren(line('Procesando…', 'muted'));
+  statusEl.replaceChildren(line(t('popup_processing'), 'muted'));
   try {
     const res = await chrome.runtime.sendMessage({ ...msg, windowId: win.id });
-    if (!res?.ok) { statusEl.replaceChildren(line(res?.error ?? 'Error', 'err')); return; }
-    if (msg.type === 'ungroup') { statusEl.replaceChildren(line(`${res.ungrouped} pestañas desagrupadas.`, 'ok')); return; }
+    if (!res?.ok) { statusEl.replaceChildren(line(res?.error ?? t('popup_error'), 'err')); return; }
+    if (msg.type === 'ungroup') { statusEl.replaceChildren(line(t('popup_ungrouped', res.ungrouped), 'ok')); return; }
     await refresh();
   } finally {
     buttons.forEach((b) => { b.disabled = false; });

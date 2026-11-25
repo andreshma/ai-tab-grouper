@@ -1,0 +1,441 @@
+{
+  "ext_name": {
+    "message": "AI Tab Grouper"
+  },
+  "ext_description": {
+    "message": "Agrupa tus pestañas por tema con IA (Claude o Gemini Nano local) o por dominio, de forma automática o manual."
+  },
+  "cmd_groupNow": {
+    "message": "Agrupar pestañas sin grupo de la ventana actual"
+  },
+  "popup_loading": {
+    "message": "Cargando…"
+  },
+  "popup_groupNow": {
+    "message": "Agrupar ahora"
+  },
+  "popup_regroup": {
+    "message": "Reorganizar todo"
+  },
+  "popup_regroupTitle": {
+    "message": "Reclasifica también las pestañas ya agrupadas"
+  },
+  "popup_ungroup": {
+    "message": "Desagrupar"
+  },
+  "popup_auto": {
+    "message": "Agrupar automáticamente al navegar"
+  },
+  "popup_settings": {
+    "message": "Configuración"
+  },
+  "popup_processing": {
+    "message": "Procesando…"
+  },
+  "popup_error": {
+    "message": "Error"
+  },
+  "popup_ungrouped": {
+    "message": "$COUNT$ pestañas desagrupadas.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "provider_nano": {
+    "message": "Gemini Nano (local)"
+  },
+  "provider_heuristic": {
+    "message": "Heurística por dominio"
+  },
+  "ago_seconds": {
+    "message": "hace $COUNT$s",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "ago_minutes": {
+    "message": "hace $COUNT$ min",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "ago_hours": {
+    "message": "hace $COUNT$ h",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_noResponse": {
+    "message": "Sin respuesta del service worker"
+  },
+  "status_noRuns": {
+    "message": "Sin ejecuciones en esta sesión."
+  },
+  "status_noProvider": {
+    "message": "No se agrupó: ningún proveedor disponible para $COUNT$ pestañas · $AGO$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "ago": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_nothingToGroup": {
+    "message": "Nada que agrupar: no hay pestañas sueltas · $AGO$",
+    "placeholders": {
+      "ago": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_lastRun": {
+    "message": "$PROVIDER$ · $TABS$ pestañas en $GROUPS$ grupos · $AGO$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "tabs": {
+        "content": "$2"
+      },
+      "groups": {
+        "content": "$3"
+      },
+      "ago": {
+        "content": "$4"
+      }
+    }
+  },
+  "status_fallback": {
+    "message": "Fallback: $PROVIDER$ → $MESSAGE$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "message": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_bridgeConnected": {
+    "message": "Claude Desktop: conectado"
+  },
+  "status_bridgeNotInstalled": {
+    "message": "Claude Desktop: host no instalado"
+  },
+  "status_bridgeReconnecting": {
+    "message": "Claude Desktop: reconectando…"
+  },
+  "status_managed": {
+    "message": "Gestionado por tu organización"
+  },
+  "status_managedProxy": {
+    "message": "Gestionado por tu organización · proxy corporativo"
+  },
+  "status_halfUpdated": {
+    "message": "Extensión actualizada a medias: pulsa ↻ en chrome://extensions."
+  },
+  "status_claudeNoConsent": {
+    "message": "Claude inactivo: falta aceptar el aviso de datos en Configuración."
+  },
+  "status_noEngine": {
+    "message": "Agrupado en Chrome sin motor: activa \"Fallback por dominio\" o Gemini Nano en Configuración."
+  },
+  "status_heuristicOnly": {
+    "message": "Agrupado en Chrome: por dominio (sin API key ni Gemini Nano)."
+  },
+  "status_desktopHint": {
+    "message": "Para agrupar por tema, pídeselo a Claude Desktop."
+  },
+  "status_claudePaused": {
+    "message": "Claude en pausa (circuit breaker) por errores repetidos."
+  },
+  "err_breakerOpen": {
+    "message": "circuit breaker abierto"
+  },
+  "err_groupingInProgress": {
+    "message": "Ya hay una agrupación en curso en esta ventana"
+  },
+  "err_bridgeDisabled": {
+    "message": "El puente con Claude Desktop está desactivado en la extensión"
+  },
+  "err_noConsent": {
+    "message": "El usuario no ha aceptado el aviso de datos en la configuración de la extensión"
+  },
+  "err_invalidWindowId": {
+    "message": "windowId inválido"
+  },
+  "err_unknownMessage": {
+    "message": "Mensaje desconocido: $TYPE$",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_unsupportedMethod": {
+    "message": "Método no soportado: $METHOD$",
+    "placeholders": {
+      "method": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_hostDisconnected": {
+    "message": "Host desconectado"
+  },
+  "err_claudeNoToolUse": {
+    "message": "Respuesta de Claude sin tool_use (stop_reason=$REASON$)",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "err_promptApiBrowser": {
+    "message": "Prompt API no disponible en este navegador"
+  },
+  "err_promptApiContext": {
+    "message": "Prompt API no disponible en este contexto"
+  },
+  "opt_title": {
+    "message": "AI Tab Grouper · Configuración"
+  },
+  "opt_managedTitle": {
+    "message": "Gestionado por tu organización."
+  },
+  "opt_managedBody": {
+    "message": "Las opciones bloqueadas las define TI y no se pueden cambiar aquí."
+  },
+  "opt_claudeHeading": {
+    "message": "Claude (proveedor principal)"
+  },
+  "opt_disclosureTitle": {
+    "message": "Qué datos se envían y a quién"
+  },
+  "opt_disclosureBody": {
+    "message": "Si activas Claude (API) o el puente con Claude Desktop, se envía a {dest} —o a tu sesión de Claude Desktop cuando tú se lo pides—: el <b>título</b>, el <b>dominio</b> y, si lo permites abajo, la <b>ruta de la URL</b> redactada de tus pestañas. Nunca se envían parámetros de URL, fragmentos, contenido de páginas, cookies ni contraseñas; se ocultan emails, IDs y números largos."
+  },
+  "opt_disclosureUse": {
+    "message": "Uso exclusivo: decidir en qué grupo va cada pestaña. El desarrollador de la extensión no recibe, almacena ni vende ningún dato. Gemini Nano y la heurística por dominio funcionan 100% en tu dispositivo y no requieren este consentimiento."
+  },
+  "opt_consent": {
+    "message": "Entiendo y acepto enviar estos datos para agrupar mis pestañas."
+  },
+  "opt_destAnthropic": {
+    "message": "Anthropic (api.anthropic.com)"
+  },
+  "opt_destProxy": {
+    "message": "el proxy de tu organización ($HOST$) y de ahí a Anthropic",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_enableClaude": {
+    "message": "Usar Claude"
+  },
+  "opt_proxyInfo": {
+    "message": "Conectado vía proxy corporativo: la credencial vive en el vault de tu organización, no en este equipo."
+  },
+  "opt_apiKeyLabel": {
+    "message": "API key de Anthropic"
+  },
+  "opt_apiKeyHelp": {
+    "message": "Usa una key dedicada con límite de gasto. Nunca se sincroniza ni se envía a otro destino que api.anthropic.com."
+  },
+  "opt_apiKeySaved": {
+    "message": "•••• $LAST4$ (guardada)",
+    "placeholders": {
+      "last4": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rememberKey": {
+    "message": "Recordar la key en este equipo (si no, se borra al cerrar Chrome)"
+  },
+  "opt_modelLabel": {
+    "message": "Modelo"
+  },
+  "opt_modelHelp": {
+    "message": "Tier pequeño recomendado (latencia/costo). Ej.: claude-haiku-5-5."
+  },
+  "opt_testConnection": {
+    "message": "Probar conexión"
+  },
+  "opt_clearKey": {
+    "message": "Eliminar key"
+  },
+  "opt_keyDeleted": {
+    "message": "Key eliminada"
+  },
+  "opt_enterKey": {
+    "message": "Ingresa una API key"
+  },
+  "opt_acceptNoticeFirst": {
+    "message": "Acepta primero el aviso de datos"
+  },
+  "opt_testing": {
+    "message": "Probando…"
+  },
+  "opt_testOk": {
+    "message": "OK · $GROUPS$",
+    "placeholders": {
+      "groups": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_noGroups": {
+    "message": "sin grupos"
+  },
+  "opt_desktopHeading": {
+    "message": "Claude Desktop (tu sesión de Claude)"
+  },
+  "opt_desktopIntro": {
+    "message": "Permite que Claude Desktop, con tu sesión iniciada y sin API key, lea tus pestañas (los mismos datos redactados del aviso) y las agrupe cuando se lo pidas. Requiere instalar el puente local una vez."
+  },
+  "opt_enableBridge": {
+    "message": "Activar puente con Claude Desktop"
+  },
+  "opt_statusLabel": {
+    "message": "Estado:"
+  },
+  "opt_extIdLabel": {
+    "message": "ID de esta extensión (para el instalador)"
+  },
+  "opt_copy": {
+    "message": "Copiar"
+  },
+  "opt_copied": {
+    "message": "Copiado ✓"
+  },
+  "opt_bridgeInstallHelp": {
+    "message": "En la carpeta <code>bridge</code>: <code>node install.mjs --extension-id <ID> --configure-claude</code> y reinicia Claude Desktop."
+  },
+  "opt_permissionDenied": {
+    "message": "Permiso denegado"
+  },
+  "bridge_off": {
+    "message": "Desactivado"
+  },
+  "bridge_connected": {
+    "message": "Conectado con el host local"
+  },
+  "bridge_notInstalled": {
+    "message": "Host no instalado: ejecuta el instalador"
+  },
+  "bridge_reconnecting": {
+    "message": "Reconectando…"
+  },
+  "opt_nanoHeading": {
+    "message": "Gemini Nano (on-device)"
+  },
+  "opt_enableNano": {
+    "message": "Usar Gemini Nano si está disponible"
+  },
+  "opt_preferOnDevice": {
+    "message": "Preferir on-device antes que Claude (privacidad primero)"
+  },
+  "opt_downloadModel": {
+    "message": "Descargar modelo"
+  },
+  "opt_nanoHelp": {
+    "message": "Requiere Chrome con Prompt API y hardware compatible. Si no está disponible, se omite."
+  },
+  "nano_available": {
+    "message": "Disponible"
+  },
+  "nano_downloadable": {
+    "message": "Descargable"
+  },
+  "nano_downloading": {
+    "message": "Descargando…"
+  },
+  "nano_unavailable": {
+    "message": "No disponible"
+  },
+  "nano_downloadProgress": {
+    "message": "Descargando $PERCENT$%",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_behaviorHeading": {
+    "message": "Comportamiento"
+  },
+  "opt_autoGroup": {
+    "message": "Agrupar automáticamente al cargar pestañas"
+  },
+  "opt_enableHeuristic": {
+    "message": "Fallback por dominio si la IA falla"
+  },
+  "opt_catchAll": {
+    "message": "Al agrupar manualmente o con Claude Desktop, poner las pestañas sueltas en \"$NAME$\"",
+    "placeholders": {
+      "name": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_languageLabel": {
+    "message": "Idioma de los nombres"
+  },
+  "opt_languageAuto": {
+    "message": "Automático (idioma del navegador)"
+  },
+  "opt_minGroupSize": {
+    "message": "Mín. pestañas por grupo nuevo"
+  },
+  "opt_minInterval": {
+    "message": "Intervalo mín. auto (s)"
+  },
+  "opt_maxTabs": {
+    "message": "Máx. pestañas por petición"
+  },
+  "opt_privacyHeading": {
+    "message": "Privacidad"
+  },
+  "opt_sendPath": {
+    "message": "Enviar ruta de URL redactada (sin query ni fragment) para mejor precisión"
+  },
+  "opt_excludedHostsLabel": {
+    "message": "Dominios que nunca salen del dispositivo (uno por línea)"
+  },
+  "opt_excludedHostsPlaceholder": {
+    "message": "mibanco.com\nintranet.empresa.com"
+  },
+  "opt_excludedHostsHelp": {
+    "message": "Se agrupan localmente por dominio. Incluye subdominios."
+  },
+  "opt_policyHosts": {
+    "message": "Además, tu organización excluye: $HOSTS$",
+    "placeholders": {
+      "hosts": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_locked": {
+    "message": "Bloqueado por la política de tu organización"
+  },
+  "opt_save": {
+    "message": "Guardar"
+  },
+  "opt_saved": {
+    "message": "Guardado ✓"
+  }
+}

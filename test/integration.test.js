@@ -153,7 +153,7 @@ describe('service worker (integration)', () => {
     assert.ok(own);
   });
 
-  it('accepts the options page opened as a tab (regression: Estado "—")', async () => {
+  it('accepts the options page opened as a tab (regression: Status "—")', async () => {
     const st = await fake.send({ type: 'status' }, { id: 'ext-id', url: 'chrome-extension://ext-id/src/options/options.html', tab: { id: 9 } });
     assert.equal(st?.ok, true);
   });
@@ -254,10 +254,11 @@ describe('Claude Desktop bridge (native messaging)', () => {
     assert.ok(!reply.result.remainingUngroupedTabIds.includes(6), 'pinned not reported as pending');
     assert.deepEqual(reply.result.remainingUngroupedTabIds, [], 'catch-all guarantees coverage even if the model skips tabs');
     assert.ok(reply.result.catchAllGroup.tabs > 0);
-    const varios = fake.groupOf(43); // the model never mentioned tab 43
-    assert.equal(varios.title, 'Varios');
-    assert.equal(varios.color, 'grey');
-    assert.equal(varios.collapsed, true);
+    const catchAll = fake.groupOf(43); // the model never mentioned tab 43
+    assert.equal(reply.result.catchAllGroup.name, 'Misc');
+    assert.equal(catchAll.title, 'Misc');
+    assert.equal(catchAll.color, 'grey');
+    assert.equal(catchAll.collapsed, true);
   });
 
   it('apply_tab_groups catchAll=false leaves the rest loose (partial requests)', async () => {
@@ -274,15 +275,15 @@ describe('Claude Desktop bridge (native messaging)', () => {
   });
 
   it('rejects unknown methods and bad windowId', async () => {
-    assert.match((await fake.hostRequest(port, { id: 3, method: 'eval', params: {} })).error.message, /no soportado/);
+    assert.match((await fake.hostRequest(port, { id: 3, method: 'eval', params: {} })).error.message, /Unsupported method/);
     assert.match((await fake.hostRequest(port, { id: 4, method: 'ungroup_tabs', params: { windowId: 'x' } })).error.message, /windowId/);
-    assert.match((await fake.hostRequest(port, { id: 5, method: '__proto__', params: {} })).error.message, /no soportado/);
+    assert.match((await fake.hostRequest(port, { id: 5, method: '__proto__', params: {} })).error.message, /Unsupported method/);
   });
 
   it('refuses data access without current consent', async () => {
     await settingsWith({ enableDesktopBridge: true, consentVersion: CONSENT_VERSION - 1 });
     const reply = await fake.hostRequest(port, { id: 6, method: 'list_tabs', params: {} });
-    assert.match(reply.error.message, /aviso de datos/);
+    assert.match(reply.error.message, /data notice/);
     await settingsWith({ enableDesktopBridge: true });
   });
 
@@ -306,24 +307,50 @@ describe('Claude Desktop bridge (native messaging)', () => {
   });
 });
 
-describe('catch-all group "Varios"', () => {
-  it('manual "Agrupar ahora" leaves nothing groupable loose', async () => {
+describe('catch-all group', () => {
+  it('manual "Group now" leaves nothing groupable loose', async () => {
     await fake.chrome.storage.sync.set({ settings: { consentVersion: CONSENT_VERSION, debounceMs: 5, minIntervalMs: 0, autoGroup: false } });
     fake.addTab({ id: 50, url: 'https://alpha.example/a', title: 'Alpha' });
     fake.addTab({ id: 51, url: 'https://beta.example/b', title: 'Beta' });
     const res = await fake.send({ type: 'group', windowId: WIN });
     assert.equal(res.ok, true);
-    assert.equal(fake.groupOf(50)?.title, 'Varios');
-    assert.equal(fake.groupOf(51)?.title, 'Varios');
+    assert.equal(fake.groupOf(50)?.title, 'Misc');
+    assert.equal(fake.groupOf(51)?.title, 'Misc');
     assert.equal(fake.tab(5).groupId, -1, 'chrome:// stays loose');
     assert.equal(fake.tab(6).groupId, -1, 'pinned stays loose');
   });
 
-  it('reuses the existing "Varios" group on the next run', async () => {
+  it('reuses the existing catch-all group on the next run', async () => {
     fake.addTab({ id: 52, url: 'https://gamma.example/c', title: 'Gamma' });
     await fake.send({ type: 'group', windowId: WIN });
     assert.equal(fake.groupOf(52)?.id, fake.groupOf(50)?.id);
-    assert.equal(fake.groupTitles().filter((t) => t === 'Varios').length, 1);
+    assert.equal(fake.groupTitles().filter((t) => t === 'Misc').length, 1);
+  });
+
+  it('keeps one catch-all group when the language changes (browser UI or setting)', async () => {
+    const titles = () => fake.groupTitles().filter((t) => t === 'Misc' || t === 'Varios');
+    fake.setUILanguage('es-ES'); // language setting is "auto" → Spanish names from now on
+    try {
+      fake.addTab({ id: 53, url: 'https://epsilon.example/d', title: 'Epsilon' });
+      await fake.send({ type: 'group', windowId: WIN });
+      assert.equal(fake.groupOf(53)?.id, fake.groupOf(50)?.id, 'joins the group created under the English UI');
+      assert.deepEqual(titles(), ['Misc']);
+      assert.equal((await fake.send({ type: 'group', windowId: 'x' })).error, 'windowId inválido', 'errors follow the UI language');
+    } finally {
+      fake.setUILanguage('en-US');
+    }
+    await fake.chrome.storage.sync.set({ settings: { consentVersion: CONSENT_VERSION, debounceMs: 5, minIntervalMs: 0, autoGroup: false, language: 'es' } });
+    fake.addTab({ id: 54, url: 'https://zeta.example/e', title: 'Zeta' });
+    await fake.send({ type: 'group', windowId: WIN });
+    assert.equal(fake.groupOf(54)?.id, fake.groupOf(50)?.id);
+    assert.deepEqual(titles(), ['Misc']);
+  });
+
+  it('a window without a catch-all group gets the title of the selected language', async () => {
+    await fake.send({ type: 'ungroup', windowId: WIN });
+    await fake.send({ type: 'group', windowId: WIN });
+    assert.equal(fake.groupOf(54)?.title, 'Varios');
+    assert.ok(!fake.groupTitles().includes('Misc'));
   });
 
   it('auto mode never uses the catch-all (singletons can pair up later)', async () => {

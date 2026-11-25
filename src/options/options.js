@@ -6,31 +6,36 @@ import {
   applyPolicy, CONSENT_VERSION, getApiKey, hasRemoteConsent, isApiKeyRemembered,
   loadPolicy, loadSettings, saveSettings, setApiKey,
 } from '../lib/config.js';
+import { catchAllName } from '../lib/catchall.js';
+import { t } from '../lib/i18n.js';
 import { classifyWithClaude } from '../lib/providers/claude.js';
 import { downloadNanoModel, nanoAvailability } from '../lib/providers/nano.js';
 import { normalizeResult } from '../lib/validate.js';
+import { localizePage } from '../ui/localize.js';
+
+localizePage();
 
 const form = /** @type {HTMLFormElement} */ (document.getElementById('form'));
 const $ = (id) => /** @type {any} */ (document.getElementById(id));
 
 const NANO_LABEL = {
-  available: ['Disponible', 'ok'],
-  downloadable: ['Descargable', 'warn'],
-  downloading: ['Descargando…', 'warn'],
-  unavailable: ['No disponible', 'muted'],
+  available: ['nano_available', 'ok'],
+  downloadable: ['nano_downloadable', 'warn'],
+  downloading: ['nano_downloading', 'warn'],
+  unavailable: ['nano_unavailable', 'muted'],
 };
-const LOCK_TITLE = 'Bloqueado por la política de tu organización';
 const BRIDGE_LABEL = {
-  off: ['Desactivado', 'muted'],
-  connected: ['Conectado con el host local', 'ok'],
-  'not-installed': ['Host no instalado: ejecuta el instalador', 'warn'],
-  error: ['Reconectando…', 'warn'],
+  off: ['bridge_off', 'muted'],
+  connected: ['bridge_connected', 'ok'],
+  'not-installed': ['bridge_notInstalled', 'warn'],
+  error: ['bridge_reconnecting', 'warn'],
 };
 
 /** Shows the bridge status reported by the service worker. */
 async function refreshBridge() {
   const st = await chrome.runtime.sendMessage({ type: 'status' });
-  const [label, cls] = BRIDGE_LABEL[st?.bridge?.state] ?? ['—', 'muted'];
+  const [key, cls] = BRIDGE_LABEL[st?.bridge?.state] ?? ['', 'muted'];
+  const label = key ? t(key) : '—';
   setText($('bridgeState'), st?.bridge?.error && st.bridge.state !== 'connected' ? `${label} (${st.bridge.error})` : label, cls);
 }
 
@@ -48,7 +53,12 @@ function setText(el, text, cls = '') {
 /** @param {HTMLElement} el */
 function lock(el) {
   el.setAttribute('disabled', '');
-  el.title = LOCK_TITLE;
+  el.title = t('opt_locked');
+}
+
+/** The catch-all checkbox names the group title the selected language will produce. */
+function refreshCatchAllLabel() {
+  $('catchAllLabel').textContent = t('opt_catchAll', catchAllName($('language').value));
 }
 
 /** Populates the form from stored settings and applies policy locks. */
@@ -71,14 +81,14 @@ async function fill() {
 
   $('managedBanner').hidden = !eff.managed;
   if (policy.excludedHosts?.length) {
-    $('policyHosts').textContent = `Además, tu organización excluye: ${policy.excludedHosts.join(', ')}`;
+    $('policyHosts').textContent = t('opt_policyHosts', policy.excludedHosts.join(', '));
   }
 
   const proxy = Boolean(eff.proxyEndpoint);
   $('proxyInfo').hidden = !proxy;
   $('byok').hidden = proxy;
   $('clearKey').hidden = proxy;
-  $('dest').textContent = proxy ? `el proxy de tu organización (${new URL(eff.proxyEndpoint).host}) y de ahí a Anthropic` : 'Anthropic (api.anthropic.com)';
+  $('dest').textContent = proxy ? t('opt_destProxy', new URL(eff.proxyEndpoint).host) : t('opt_destAnthropic');
   if (locked.has('apiKey') && !proxy) { lock($('apiKey')); lock($('clearKey')); }
 
   $('rememberApiKey').checked = eff.apiKeyStorage === 'user' ? await isApiKeyRemembered() : eff.apiKeyStorage === 'local';
@@ -86,8 +96,9 @@ async function fill() {
 
   $('consent').checked = hasRemoteConsent(settings);
   const key = proxy ? '' : await getApiKey();
-  $('apiKey').placeholder = key ? `•••• ${key.slice(-4)} (guardada)` : 'sk-ant-…';
+  $('apiKey').placeholder = key ? t('opt_apiKeySaved', key.slice(-4)) : 'sk-ant-…';
   $('extId').value = chrome.runtime.id;
+  refreshCatchAllLabel();
   await refreshNano(settings.language);
   await refreshBridge();
 }
@@ -114,11 +125,11 @@ function rememberKey() {
   return $('rememberApiKey').checked;
 }
 
-/** @param {'es'|'en'} language */
+/** @param {'auto'|'en'|'es'} language */
 async function refreshNano(language) {
   const state = await nanoAvailability(language);
-  const [label, cls] = NANO_LABEL[state] ?? [state, ''];
-  setText($('nanoState'), label, cls);
+  const [key, cls] = NANO_LABEL[state] ?? ['', ''];
+  setText($('nanoState'), key ? t(key) : state, cls);
   $('downloadNano').hidden = state !== 'downloadable';
 }
 
@@ -132,7 +143,7 @@ form.addEventListener('submit', async (e) => {
   $('apiKey').value = '';
   await saveSettings({ ...readForm(), consentVersion: $('consent').checked ? CONSENT_VERSION : 0 });
   await fill();
-  setText($('saved'), 'Guardado ✓', 'ok');
+  setText($('saved'), t('opt_saved'), 'ok');
   setTimeout(() => setText($('saved'), ''), 2000);
   setTimeout(refreshBridge, 800); // let the SW (re)connect before showing state
 });
@@ -144,35 +155,37 @@ $('enableDesktopBridge').addEventListener('change', (e) => {
   chrome.permissions.request({ permissions: ['nativeMessaging'] }).then((granted) => {
     if (!granted) {
       box.checked = false;
-      setText($('bridgeState'), 'Permiso denegado', 'warn');
+      setText($('bridgeState'), t('opt_permissionDenied'), 'warn');
     }
   });
 });
 
+$('language').addEventListener('change', refreshCatchAllLabel);
+
 $('copyId').addEventListener('click', async () => {
   await navigator.clipboard.writeText(chrome.runtime.id);
-  setText($('copyId'), 'Copiado ✓');
-  setTimeout(() => setText($('copyId'), 'Copiar'), 1500);
+  setText($('copyId'), t('opt_copied'));
+  setTimeout(() => setText($('copyId'), t('opt_copy')), 1500);
 });
 
 $('clearKey').addEventListener('click', async () => {
   await setApiKey('');
   await fill();
-  setText($('claudeResult'), 'Key eliminada', 'muted');
+  setText($('claudeResult'), t('opt_keyDeleted'), 'muted');
 });
 
 $('testClaude').addEventListener('click', async () => {
   const endpoint = eff.proxyEndpoint || undefined;
   const apiKey = endpoint ? '' : ($('apiKey').value.trim() || (await getApiKey()));
-  if (!endpoint && !apiKey) { setText($('claudeResult'), 'Ingresa una API key', 'warn'); return; }
-  if (!$('consent').checked) { setText($('claudeResult'), 'Acepta primero el aviso de datos', 'warn'); return; }
-  setText($('claudeResult'), 'Probando…', 'muted');
+  if (!endpoint && !apiKey) { setText($('claudeResult'), t('opt_enterKey'), 'warn'); return; }
+  if (!$('consent').checked) { setText($('claudeResult'), t('opt_acceptNoticeFirst'), 'warn'); return; }
+  setText($('claudeResult'), t('opt_testing'), 'muted');
   // Synthetic tabs only: the connectivity test never sends real browsing data.
   const sample = {
     existingGroups: [],
     tabs: [
-      { id: 1, title: 'Vuelos a Lisboa - Comparar precios', host: 'skyscanner.com' },
-      { id: 2, title: 'Hoteles en Lisboa', host: 'booking.com' },
+      { id: 1, title: 'Flights to Lisbon - Compare prices', host: 'skyscanner.com' },
+      { id: 2, title: 'Hotels in Lisbon', host: 'booking.com' },
       { id: 3, title: 'aws_s3_bucket | Terraform Registry', host: 'registry.terraform.io' },
       { id: 4, title: 'S3 pricing', host: 'aws.amazon.com' },
     ],
@@ -182,7 +195,7 @@ $('testClaude').addEventListener('click', async () => {
       apiKey, endpoint, model: $('claudeModel').value.trim(), language: $('language').value, retries: 0,
     });
     const groups = normalizeResult(raw, new Set([1, 2, 3, 4]));
-    setText($('claudeResult'), `OK · ${groups.map((g) => g.name).join(', ') || 'sin grupos'}`, 'ok');
+    setText($('claudeResult'), t('opt_testOk', groups.map((g) => g.name).join(', ') || t('opt_noGroups')), 'ok');
     await chrome.runtime.sendMessage({ type: 'reset-breakers' });
   } catch (err) {
     setText($('claudeResult'), String(err?.message ?? err).slice(0, 160), 'err');
@@ -193,7 +206,7 @@ $('downloadNano').addEventListener('click', async () => {
   const lang = $('language').value;
   $('downloadNano').disabled = true;
   try {
-    await downloadNanoModel(lang, (f) => setText($('nanoState'), `Descargando ${Math.round(f * 100)}%`, 'warn'));
+    await downloadNanoModel(lang, (f) => setText($('nanoState'), t('nano_downloadProgress', Math.round(f * 100)), 'warn'));
   } catch (err) {
     setText($('nanoState'), String(err?.message ?? err), 'err');
   } finally {

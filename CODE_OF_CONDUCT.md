@@ -1,18 +1,15 @@
-# Contributor Covenant Code of Conduct
+# Contributor Covenant code of conduct
 
-## Our Pledge
+## Our pledge
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity and
-orientation.
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for
+everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity
+and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion,
+or sexual identity and orientation.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
-## Our Standards
+## Our standards
 
 Examples of behavior that contributes to a positive environment:
 
@@ -30,41 +27,34 @@ Examples of unacceptable behavior:
 - Publishing others' private information without explicit permission
 - Other conduct which could reasonably be considered inappropriate
 
-## Enforcement Responsibilities
+## Enforcement responsibilities
 
-Community leaders are responsible for clarifying and enforcing our standards and
-will take appropriate and fair corrective action in response to any behavior
-that they deem inappropriate, threatening, offensive, or harmful.
+Community leaders are responsible for clarifying and enforcing our standards and will take appropriate and fair
+corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
+This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing
+the community in public spaces.
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported privately to the maintainer, GitHub user
-[andreshma](https://github.com/andreshma):
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately to the maintainer, GitHub
+user [andreshma](https://github.com/andreshma):
 
-- If it happened in an issue, pull request, discussion or comment, use that
-  item's **"Report content" → "Report to repository admins"** option. The
-  report is visible only to the maintainer, not to the reported person or the
-  public.
-- Otherwise, open an issue titled "Conduct report — private contact
-  requested", **without any details**; the maintainer will reply with a
-  private channel.
+- If it happened in an issue, pull request, discussion or comment, use that item's **"Report content" → "Report to
+  repository admins"** option. The report is visible only to the maintainer, not to the reported person or the public.
+- Otherwise, open an issue titled "Conduct report — private contact requested", **without any details**; the maintainer
+  will reply with a private channel.
 
-Please do not describe conduct issues in public. All complaints will be
-reviewed and investigated promptly and fairly, and the reporter's privacy will
-be respected.
+Please do not describe conduct issues in public. All complaints will be reviewed and investigated promptly and fairly,
+and the reporter's privacy will be respected.
 
 (Security vulnerabilities go through [SECURITY.md](SECURITY.md) instead.)
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.1, available at
-https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
+This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 2.1, available at
+<https://www.contributor-covenant.org/version/2/1/code_of_conduct.html>.
 
 [homepage]: https://www.contributor-covenant.org

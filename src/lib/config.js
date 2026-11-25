@@ -20,7 +20,7 @@
  * @property {boolean} enableHeuristic  Fall back to grouping by registrable domain.
  * @property {boolean} preferOnDevice   Try Gemini Nano before Claude (privacy-first ordering).
  * @property {string}  claudeModel      Anthropic model id. Small tier by default: simple task, latency matters.
- * @property {'es'|'en'} language       Language for generated group names.
+ * @property {'auto'|'en'|'es'} language Language for generated group names ('auto' = browser UI language).
  * @property {number}  minGroupSize     Minimum tabs to create a NEW group (existing groups accept 1).
  * @property {string[]} excludedHosts   Hosts never sent to a remote model (grouped locally instead).
  * @property {boolean} sendPath         Send a redacted URL path to the model (better accuracy, more data).
@@ -29,7 +29,7 @@
  * @property {number}  maxTabsPerRequest Upper bound of tabs sent per classification.
  * @property {number}  consentVersion   Version of the data disclosure the user accepted (0 = none).
  * @property {boolean} enableDesktopBridge Expose tabs to Claude Desktop via the local MCP bridge.
- * @property {boolean} catchAllGroup    Manual/Desktop runs put leftover tabs into "Varios" (never in auto mode).
+ * @property {boolean} catchAllGroup    Manual/Desktop runs put leftover tabs into the catch-all group (never in auto mode).
  */
 
 /**
@@ -69,7 +69,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   enableHeuristic: true,
   preferOnDevice: false,
   claudeModel: 'claude-haiku-5-5',
-  language: 'es',
+  language: 'auto',
   minGroupSize: 2,
   excludedHosts: [],
   sendPath: true,

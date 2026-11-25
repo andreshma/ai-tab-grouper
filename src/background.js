@@ -12,6 +12,7 @@ import { isAutoCandidate, isFreshCandidate, isGroupableUrl, NO_GROUP } from './l
 import { classifyWithClaude } from './lib/providers/claude.js';
 import { classifyWithNano, nanoAvailability } from './lib/providers/nano.js';
 import { createBridge } from './lib/bridge.js';
+import { t } from './lib/i18n.js';
 import { groupsWithExcludedTabs, hostOf, isHostExcluded, toTabDescriptor } from './lib/redact.js';
 import { CircuitBreaker } from './lib/resilience.js';
 import { normalizeResult } from './lib/validate.js';
@@ -90,12 +91,12 @@ async function recordRun(summary) {
 async function runGrouping(windowId, mode) {
   const settings = await loadEffectiveSettings();
   if (mode === 'auto') {
-    if (!settings.autoGroup) return { ok: true, skipped: 'auto desactivado' };
-    if (running.has(windowId)) { rerun.add(windowId); return { ok: true, skipped: 'en curso' }; }
+    if (!settings.autoGroup) return { ok: true, skipped: 'auto-disabled' };
+    if (running.has(windowId)) { rerun.add(windowId); return { ok: true, skipped: 'in-progress' }; }
     const wait = (lastAutoRun.get(windowId) ?? 0) + settings.minIntervalMs - Date.now();
     if (wait > 0) { scheduleAuto(windowId, wait); return { ok: true, skipped: 'throttle' }; }
   } else if (running.has(windowId)) {
-    return { ok: false, error: 'Ya hay una agrupación en curso en esta ventana' };
+    return { ok: false, error: t('err_groupingInProgress') };
   }
 
   running.add(windowId);
@@ -110,8 +111,8 @@ async function runGrouping(windowId, mode) {
     }).slice(0, settings.maxTabsPerRequest);
 
     if (mode === 'auto') {
-      if (!candidates.some((t) => isFreshCandidate(t, ledger[t.id]))) return { ok: true, skipped: 'sin cambios' };
-      if (!groups.length && candidates.length < settings.minGroupSize) return { ok: true, skipped: 'insuficientes' };
+      if (!candidates.some((t) => isFreshCandidate(t, ledger[t.id]))) return { ok: true, skipped: 'no-changes' };
+      if (!groups.length && candidates.length < settings.minGroupSize) return { ok: true, skipped: 'not-enough-tabs' };
       lastAutoRun.set(windowId, Date.now());
     }
     if (!candidates.length) {
@@ -161,14 +162,14 @@ const BRIDGE_MAX_TABS = 200;
  */
 async function bridgeGuard() {
   const s = await loadEffectiveSettings();
-  if (!s.enableDesktopBridge) throw new Error('El puente con Claude Desktop está desactivado en la extensión');
-  if (!hasRemoteConsent(s)) throw new Error('El usuario no ha aceptado el aviso de datos en la configuración de la extensión');
+  if (!s.enableDesktopBridge) throw new Error(t('err_bridgeDisabled'));
+  if (!hasRemoteConsent(s)) throw new Error(t('err_noConsent'));
   return s;
 }
 
 /** @param {unknown} v */
 function requireWindowId(v) {
-  if (!Number.isInteger(v)) throw new Error('windowId inválido');
+  if (!Number.isInteger(v)) throw new Error(t('err_invalidWindowId'));
   return /** @type {number} */ (v);
 }
 
@@ -320,10 +321,10 @@ async function handleMessage(msg) {
   const windowId = Number(msg?.windowId);
   switch (msg?.type) {
     case 'group':
-      if (!Number.isInteger(windowId)) throw new Error('windowId inválido');
+      if (!Number.isInteger(windowId)) throw new Error(t('err_invalidWindowId'));
       return runGrouping(windowId, msg.all ? 'all' : 'ungrouped');
     case 'ungroup':
-      if (!Number.isInteger(windowId)) throw new Error('windowId inválido');
+      if (!Number.isInteger(windowId)) throw new Error(t('err_invalidWindowId'));
       return { ok: true, ungrouped: await ungroupAll(windowId) };
     case 'status': {
       const settings = await loadEffectiveSettings();
@@ -344,7 +345,7 @@ async function handleMessage(msg) {
       await Promise.all(['claude', 'nano'].map((n) => breakerFor(n).recordSuccess()));
       return { ok: true };
     default:
-      throw new Error(`Mensaje desconocido: ${msg?.type}`);
+      throw new Error(t('err_unknownMessage', String(msg?.type)));
   }
 }
 

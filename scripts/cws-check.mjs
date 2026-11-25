@@ -22,15 +22,15 @@ const check = (ok, name, detail = '') => results.push({ ok, name, detail });
 
 /** Permissions allowed for this extension + the justification to paste in the CWS dashboard. */
 const PERMISSION_JUSTIFICATIONS = {
-  tabs: 'Leer título y URL de las pestañas para decidir su grupo (función única de la extensión).',
-  tabGroups: 'Crear, nombrar y colorear grupos de pestañas.',
-  storage: 'Guardar preferencias del usuario, política gestionada por TI y estado de sesión.',
+  tabs: 'Read the title and URL of tabs to decide their group (the extension\'s single purpose).',
+  tabGroups: 'Create, name and color tab groups.',
+  storage: 'Store user preferences, IT-managed policy and session state.',
 };
 const OPTIONAL_JUSTIFICATIONS = {
-  nativeMessaging: 'Opcional, solicitado solo si el usuario activa el puente con Claude Desktop: comunica la extensión con el host local instalado por el usuario (allowed_origins restringido a esta extensión).',
+  nativeMessaging: 'Optional, requested only if the user enables the Claude Desktop bridge: it connects the extension to the local host installed by the user (allowed_origins restricted to this extension).',
 };
 const HOST_JUSTIFICATIONS = {
-  'https://api.anthropic.com/*': 'Enviar título/dominio redactados al modelo Claude del usuario (BYOK) para clasificar pestañas, solo con consentimiento explícito.',
+  'https://api.anthropic.com/*': 'Send the redacted title/domain to the user\'s Claude model (BYOK) to classify tabs, only with explicit consent.',
 };
 const FORBIDDEN_PERMISSIONS = ['<all_urls>', 'webRequest', 'webRequestBlocking', 'debugger', 'cookies', 'history', 'scripting', 'nativeMessaging', 'management', 'proxy', 'declarativeNetRequestWithHostAccess'];
 
@@ -39,8 +39,37 @@ const manifest = JSON.parse(read('manifest.json'));
 
 // ---- Manifest limits ----
 check(manifest.manifest_version === 3, 'manifest_version 3');
-check(manifest.name?.length > 0 && manifest.name.length <= 75, 'name ≤ 75 chars', `${manifest.name?.length}`);
-check(manifest.description?.length > 0 && manifest.description.length <= 132, 'description ≤ 132 chars', `${manifest.description?.length}`);
+
+// ---- Locales: every __MSG_*__ in the manifest resolves in every locale; store limits hold per locale ----
+const MSG_REF = /__MSG_([A-Za-z0-9_@]+)__/g;
+const localeDir = join(ROOT, '_locales');
+const locales = existsSync(localeDir) ? readdirSync(localeDir).sort() : [];
+const usesMessages = MSG_REF.test(JSON.stringify(manifest));
+check(!usesMessages || locales.includes(manifest.default_locale), 'default_locale has a _locales catalogue', `${manifest.default_locale}`);
+check(usesMessages || !manifest.default_locale, 'default_locale only with localized manifest');
+/** @param {string} locale @param {unknown} value @returns {string} `value` with its __MSG_*__ references expanded ('' if one is missing). */
+const localized = (locale, value) => {
+  const messages = JSON.parse(read(join('_locales', locale, 'messages.json')));
+  let ok = true;
+  const text = String(value ?? '').replace(MSG_REF, (_, key) => {
+    const entry = Object.entries(messages).find(([k]) => k.toLowerCase() === key.toLowerCase())?.[1];
+    if (!entry?.message) ok = false;
+    return entry?.message ?? '';
+  });
+  return ok ? text : '';
+};
+for (const locale of usesMessages ? locales : ['']) {
+  const [name, description] = locale
+    ? [localized(locale, manifest.name), localized(locale, manifest.description)]
+    : [manifest.name ?? '', manifest.description ?? ''];
+  const tag = locale ? ` [${locale}]` : '';
+  check(name.length > 0 && name.length <= 75, `name ≤ 75 chars${tag}`, `${name.length}`);
+  check(description.length > 0 && description.length <= 132, `description ≤ 132 chars${tag}`, `${description.length}`);
+  if (locale) {
+    const unresolved = [...JSON.stringify(manifest).matchAll(MSG_REF)].map((m) => m[0]).filter((ref) => !localized(locale, ref));
+    check(unresolved.length === 0, `manifest messages resolve${tag}`, unresolved.join(', '));
+  }
+}
 check(/^\d{1,5}(\.\d{1,5}){0,3}$/.test(manifest.version) && manifest.version.split('.').every((n) => Number(n) <= 65535), 'version format', manifest.version);
 
 // ---- Referenced files exist ----
@@ -140,11 +169,12 @@ check(/Chrome Web Store User Data Policy, including the Limited Use requirements
 if (zipPath) {
   const listing = listZipEntries(readFileSync(zipPath));
   check(listing.includes('manifest.json'), 'zip: manifest.json at root');
-  const junk = listing.filter((f) => /^(test|docs|scripts|bridge|node_modules|\.github)\/|\.map$|package(-lock)?\.json$|\.md$/.test(f));
+  const junk = listing.filter((f) => /^(test|docs|scripts|bridge|node_modules|\.github)\/|\.map$|package(-lock)?\.json$|\.md$|\.cff$/.test(f));
   check(junk.length === 0, 'zip: no dev/test files', junk.slice(0, 5).join(', '));
   const kb = Math.round(statSync(zipPath).size / 1024);
   check(kb < 10 * 1024, 'zip size sane', `${kb} KB`);
-  const needed = [...referenced, ...srcFiles.map((f) => relative(ROOT, join(ROOT, f)).replaceAll('\\', '/'))];
+  const localeFiles = locales.map((l) => `_locales/${l}/messages.json`);
+  const needed = [...referenced, ...localeFiles, ...srcFiles.map((f) => relative(ROOT, join(ROOT, f)).replaceAll('\\', '/'))];
   const notPacked = needed.filter((f) => !listing.includes(f));
   check(notPacked.length === 0, 'zip: contains all runtime files', notPacked.join(', '));
 }
@@ -152,10 +182,10 @@ if (zipPath) {
 // ---- Report ----
 const pad = Math.max(...results.map((r) => r.name.length));
 for (const r of results) console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.name.padEnd(pad)}  ${r.ok ? '' : r.detail}`);
-console.log('\nJustificaciones para el dashboard de CWS:');
+console.log('\nJustifications for the CWS dashboard:');
 for (const p of perms) console.log(`  - ${p}: ${PERMISSION_JUSTIFICATIONS[p] ?? '??'}`);
 for (const h of hosts) console.log(`  - ${h}: ${HOST_JUSTIFICATIONS[h] ?? '??'}`);
-for (const o of optional) console.log(`  - ${o} (opcional): ${OPTIONAL_JUSTIFICATIONS[o] ?? '??'}`);
+for (const o of optional) console.log(`  - ${o} (optional): ${OPTIONAL_JUSTIFICATIONS[o] ?? '??'}`);
 const failed = results.filter((r) => !r.ok).length;
 console.log(`\n${results.length - failed}/${results.length} checks passed`);
 process.exit(failed ? 1 : 0);
