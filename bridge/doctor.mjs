@@ -72,12 +72,11 @@ export async function runDoctor({ browser = 'chrome', env = process.env, platfor
   const home = env.AI_TAB_GROUPER_HOME ?? homedir();
   const target = hostManifestTarget(/** @type {any} */ (browser), platform, home, { sandboxed: Boolean(env.AI_TAB_GROUPER_HOME) });
   const manifestFile = resolveManifestFile(target);
-  let extensionId = '';
   if (!manifestFile || !existsSync(manifestFile)) {
     add('FAIL', `Host nativo registrado (${browser})`, `No encontrado (${target.registryKey ?? target.file}). Ejecuta: node install.mjs --extension-id <ID> --configure-claude`);
   } else {
     const m = JSON.parse(readFileSync(manifestFile, 'utf8'));
-    extensionId = String(m.allowed_origins?.[0] ?? '').replace(/^chrome-extension:\/\/|\/$/g, '');
+    const extensionId = String(m.allowed_origins?.[0] ?? '').replace(/^chrome-extension:\/\/|\/$/g, '');
     const okShape = m.name === HOST_NAME && m.type === 'stdio' && isExtensionId(extensionId);
     add(okShape ? 'PASS' : 'FAIL', 'Manifest del host válido', okShape ? `ID permitido: ${extensionId}` : manifestFile);
     const launcherOk = existsSync(m.path);
